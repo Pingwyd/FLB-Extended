@@ -143,3 +143,15 @@ flb.db
 # OS generated files
 .DS_Store
 Thumbs.db
+
+
+#Docker
+.dockerignore
+Dockerfile
+
+#txt
+concept.txt
+requirements.txt
+implement.md
+not_yet_implemented.md
+Uniformity.md
