@@ -1,332 +1,168 @@
 # FLB Extended — Nigerian Agricultural Platform
 
-A comprehensive platform connecting farmers, workers, realtors, and service providers across Nigeria's agricultural ecosystem.
+![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)
+![Flask](https://img.shields.io/badge/Flask-2.3.2-green.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Status](https://img.shields.io/badge/Status-Active_Development-orange.svg)
+
+A comprehensive platform connecting farmers, workers, realtors, and service providers across Nigeria's agricultural ecosystem. FLB Extended empowers the agricultural community with AI-driven tools, a robust marketplace, and secure transaction systems.
+
+## 📋 Table of Contents
+
+- [Project Overview](#-project-overview)
+- [Key Features](#-key-features)
+- [Screenshots](#-screenshots)
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [Project Structure](#-project-structure)
+- [Tech Stack](#-tech-stack)
+- [API Documentation](#-api-documentation)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Contact](#-contact)
 
 ## 🌟 Project Overview
 
-FLB Extended is a full-stack agricultural marketplace and assistance platform built with Flask and SQLAlchemy. The platform provides farmers with AI-powered tools for crop selection, cost management, and post-harvest storage, while also facilitating connections between farmers, agricultural workers, and land opportunities.
+FLB Extended is a full-stack agricultural marketplace and assistance platform built with Flask and SQLAlchemy. It addresses critical gaps in the Nigerian agricultural sector by:
 
-## ✅ Completed Milestones (11/11)
+*   **Connecting Stakeholders:** Bridging the gap between farmers, skilled laborers, and land owners.
+*   **Optimizing Production:** Providing AI-powered tools for crop selection, cost estimation, and shelf-life prediction.
+*   **Ensuring Trust:** Implementing rigorous user verification (NIN, Passport) and secure contract systems.
+*   **Facilitating Commerce:** Offering a seamless marketplace for real estate and labor, backed by a digital wallet system.
 
-### Milestone 1: Authentication & User Management ✅
-- User registration and login
-- Multi-role support (Farmer, Worker, Landowner, Realtor)
-- Password policy and rate limiting
-- **Tests:** Passing
+## 🚀 Key Features
 
-### Milestone 2: Document Verification ✅
-- Document upload for user verification
-- Admin approval workflow
-- Audit logging for admin access
-- **Tests:** Passing
+### 1. User Management & Verification
+*   **Multi-Role System:** Dedicated accounts for Farmers, Workers, Realtors, and Admins.
+*   **Identity Verification:** Secure upload and admin review of government IDs (NIN, Passport, Driver's License).
+*   **Security:** Password hashing, rate limiting, and secure headers.
 
-### Milestone 3: Messaging & Contracts ✅
-- Direct messaging between users
-- Contract creation and digital signatures
-- Two-party contract signing workflow
-- **Tests:** Passing
+### 2. Agricultural Marketplace
+*   **Real Estate:** Buy, sell, or lease agricultural land with detailed filtering.
+*   **Worker Directory:** Find and hire skilled agricultural workers based on specialization and location.
+*   **Produce Assistant:**
+    *   **Cost Calculator:** Estimate total production costs (seeds, labor, fertilizer, etc.).
+    *   **Shelf Life Predictor:** AI-based estimation of produce longevity.
+    *   **Crop Recommender:** Data-driven crop suggestions based on soil and climate data.
 
-### Milestone 4: Payments & Wallet ✅
-- Virtual wallet system
-- Interswitch integration (Sandbox)
-- Transaction history and withdrawals
-- **Tests:** Passing
+### 3. Communication & Contracts
+*   **Messaging System:** Real-time communication between users.
+*   **Digital Contracts:** Legally binding agreements for services and sales.
+*   **Secure Signatures:** Two-party digital signing workflow.
 
-### Milestone 5: Marketplace ✅
-- **Real Estate Listings:** Land for sale/lease with filtering
-- **Worker Profiles:** Skilled agricultural workers directory
-- Full CRUD operations with authorization
-- **Tests:** Passing
+### 4. Financial System
+*   **Digital Wallet:** Integrated wallet for holding and transferring funds.
+*   **Transaction History:** Detailed logs of all financial activities.
+*   **Payment Integration:** (In Progress) Interswitch integration for seamless payments.
 
-### Milestone 6: Produce Assistant ✅
-- Cost Calculator
-- Shelf Life Calculator
-- AI Crop Recommender
-- **Tests:** 57 passing
+### 5. Community & Support
+*   **Forum:** Community discussions, Q&A, and knowledge sharing.
+*   **Rating System:** 5-star reviews for workers and realtors.
+*   **Admin Dashboard:** Comprehensive tools for moderation, user management, and system oversight.
 
-### Milestone 7: Admin System ✅
-- Ban/Unban users
-- Report system
-- Audit logs
-- **Tests:** Passing
+## 📸 Screenshots
 
-### Milestone 8: Forum ✅
-- Community discussions
-- Q&A with voting
-- Categories and moderation
-- **Tests:** Passing
+| Dashboard | Marketplace |
+|:---------:|:-----------:|
+| ![Dashboard](static/uploads/listings/images/5f8c9f67-cf9b-4eb3-9b75-031d4d169abb_Screenshot_2025-11-25_051559.png) | ![Marketplace](static/uploads/listings/images/ddf7a72d-0886-4e54-b3f2-013c8bf25a29_Screenshot_2025-11-25_051559.png) |
 
-### Milestone 9: Ratings & Reviews ✅
-- 5-star rating system
-- Reviews for workers and realtors
-- **Tests:** Passing
+| Listing Details | User Profile |
+|:---------------:|:------------:|
+| ![Listing](static/uploads/listings/images/4478ed98-5c1f-4951-993c-29abf950fae6_Screenshot_2025-11-25_051920.png) | ![Profile](static/uploads/listings/images/614b714d-8a8c-4623-aa1a-640d611745c0_Screenshot_2025-11-25_051920.png) |
 
-### Milestone 10: Security & Compliance ✅
-- Secure headers (Talisman)
-- Rate limiting
-- Input validation
-- Legal documents (ToS, Privacy Policy)
-
-### Milestone 11: Testing & Deployment ✅
-- CI/CD pipeline ready
-- Docker support
-- High test coverage
-
-## 📊 Test Coverage
-
-**Total: >150 Tests (All Passing)** 🎉
-```
-tests/test_app.py
-tests/test_auth.py
-tests/test_contracts.py
-tests/test_listings.py
-tests/test_messaging.py
-tests/test_produce_assistant.py
-tests/test_verification.py
-tests/test_workers.py
-tests/test_admin.py
-tests/test_forum.py
-tests/test_ratings.py
-tests/test_payment_manual.py
-tests/test_audit_logging.py
-```
-
-## 🚀 Quick Start
+## 💻 Installation
 
 ### Prerequisites
-- Python 3.13+
-- Windows PowerShell (or bash/zsh on Linux/Mac)
+*   Python 3.13+
+*   Git
 
-### Installation
+### Steps
 
-```powershell
-# Clone the repository
-git clone <repository-url>
-cd "FLB extended"
+1.  **Clone the repository**
+    ```bash
+    git clone https://github.com/Pingwyd/FLB-Extended.git
+    cd "FLB extended"
+    ```
 
-# Create virtual environment
-python -m venv .venv
+2.  **Create a virtual environment**
+    ```bash
+    # Windows
+    python -m venv .venv
+    .\.venv\Scripts\Activate.ps1
 
-# Activate virtual environment
-.\.venv\Scripts\Activate.ps1  # Windows PowerShell
-# source .venv/bin/activate    # Linux/Mac
+    # Linux/Mac
+    python3 -m venv .venv
+    source .venv/bin/activate
+    ```
 
-# Install dependencies
-python -m pip install -r requirements.txt
-```
+3.  **Install dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-### Running the Application
+4.  **Initialize the database**
+    The database `flb.db` will be automatically created when you run the application for the first time.
 
-```powershell
-# Start the Flask development server
-python app.py
+## 🏃 Usage
 
-# The API will be available at http://localhost:5000
-```
+1.  **Start the application**
+    ```bash
+    python app.py
+    ```
 
-### Running Tests
+2.  **Access the platform**
+    Open your browser and navigate to `http://localhost:5000`.
 
-```powershell
-# Run all tests
-python -m pytest
-
-# Run with verbose output
-python -m pytest -v
-
-# Run specific test file
-python -m pytest tests/test_produce_assistant.py
-
-# Run specific test class
-python -m pytest tests/test_produce_assistant.py::TestCropRecommender
-```
+3.  **Run Tests**
+    ```bash
+    pytest
+    ```
 
 ## 📁 Project Structure
 
 ```
 FLB extended/
-├── app.py                          # Main Flask application (1480+ lines)
-├── models.py                       # SQLAlchemy models (513 lines)
-├── calculator.py                   # Produce assistant algorithms (850+ lines)
-├── config.py                       # Configuration settings
-├── requirements.txt                # Python dependencies
-├── README.md                       # This file
-├── tests/                          # Test suite (108 tests)
-│   ├── conftest.py                # Test fixtures
-│   ├── test_app.py                # Basic app tests
-│   ├── test_auth.py               # Authentication tests
-│   ├── test_contracts.py          # Contract workflow tests
-│   ├── test_listings.py           # Real estate tests
-│   ├── test_messaging.py          # Messaging tests
-│   ├── test_produce_assistant.py  # Produce assistant tests (57 tests)
-│   ├── test_verification.py       # Document verification tests
-│   └── test_workers.py            # Worker profile tests
-├── Guides/                         # Implementation guides
-│   ├── MILESTONE_6_IMPLEMENTATION.md
-│   ├── ADMIN_IMPLEMENTATION_GUIDE.md
-│   └── GITHUB_PROJECT_SETUP.md
-└── txts/                           # Documentation
-    ├── MILESTONE_6_COMPLETED.md   # Detailed completion report
-    └── CHECKLIST.md               # Project checklist
+├── app.py                          # Main Application Entry Point
+├── models.py                       # Database Models
+├── calculator.py                   # Produce Assistant Logic
+├── config.py                       # Configuration
+├── templates/                      # HTML Templates
+├── static/                         # Static Assets (CSS, JS, Images)
+├── tests/                          # Test Suite
+├── Guides/                         # Implementation Guides
+└── txts/                           # Project Documentation
 ```
 
 ## 🔧 Tech Stack
 
-- **Backend:** Flask 2.3.2
-- **Database:** SQLAlchemy 1.4.48 (SQLite for development)
-- **Authentication:** Flask-JWT-Extended 4.5.2
-- **Password Hashing:** Werkzeug security
-- **Testing:** pytest 7.4.0
-- **Python:** 3.13.9
+*   **Backend:** Python, Flask
+*   **Database:** SQLAlchemy (SQLite/PostgreSQL)
+*   **Frontend:** HTML5, CSS3, JavaScript (Alpine.js/Tailwind)
+*   **Authentication:** Flask-JWT-Extended
+*   **Testing:** Pytest
 
-## 📱 API Endpoints
+## 📚 API Documentation
 
-### Authentication
-- `POST /register` - User registration
-- `POST /login` - User login
-
-### Verification
-- `POST /verification/upload` - Upload verification document
-- `GET /verification/documents/<user_id>` - Get user's documents
-- `POST /verification/verify/<doc_id>` - Admin document approval
-
-### Messaging
-- `POST /messaging/send` - Send message
-- `GET /messaging/<user_id>` - Get user's messages
-- `POST /messaging/read/<message_id>` - Mark message as read
-
-### Contracts
-- `POST /contracts/create` - Create contract
-- `POST /contracts/<contract_id>/sign` - Sign contract
-- `GET /contracts/user/<user_id>` - Get user's contracts
-
-### Marketplace - Real Estate
-- `POST /listings` - Create listing
-- `GET /listings` - Get all listings (with filters)
-- `GET /listings/<listing_id>` - Get single listing
-- `PUT /listings/<listing_id>` - Update listing
-- `DELETE /listings/<listing_id>` - Delete listing
-- `GET /listings/user/<user_id>` - Get user's listings
-
-### Marketplace - Workers
-- `POST /workers` - Create worker profile
-- `GET /workers` - Get all workers (with filters)
-- `GET /workers/<worker_id>` - Get single worker
-- `PUT /workers/<worker_id>` - Update worker profile
-- `GET /workers/user/<user_id>` - Get worker by user ID
-
-### Produce Assistant - Cost Calculator
-- `POST /produce-assistant/calculate-cost` - Calculate production costs
-- `GET /produce-assistant/calculations/<user_id>` - Get user's calculations
-- `GET /produce-assistant/calculation/<calc_id>` - Get calculation details
-
-### Produce Assistant - Shelf Life
-- `POST /produce-assistant/predict-shelf-life` - Predict shelf life
-- `GET /produce-assistant/predictions/<user_id>` - Get user's predictions
-- `GET /produce-assistant/prediction/<pred_id>` - Get prediction details
-
-### Produce Assistant - Crop Recommender
-- `POST /produce-assistant/recommend-crops` - Get crop recommendations
-- `GET /produce-assistant/recommendations/<user_id>` - Get user's recommendations
-- `GET /produce-assistant/recommendation/<rec_id>` - Get recommendation details
-
-## 🌾 Produce Assistant Features
-
-### Cost Calculator
-Calculate complete production costs with breakdown:
-- Land preparation
-- Seeds/seedlings
-- Fertilizers
-- Labor
-- Irrigation
-- Pesticides
-- Harvesting
-- Transportation
-
-**Output:** Total cost, profit projections, cost-per-kg, profitability rating
-
-### Shelf Life Calculator
-Predict storage duration for 23 produce types:
-- **Vegetables:** Tomato, Onion, Pepper, Cabbage, Okra, Lettuce, Cucumber
-- **Fruits:** Watermelon, Orange, Banana, Mango, Pineapple, Pawpaw
-- **Grains:** Maize, Rice, Sorghum, Millet
-- **Legumes:** Beans, Groundnut, Soybean
-- **Tubers:** Cassava, Yam, Sweet Potato
-
-**Output:** Shelf life days, quality timeline, optimal storage conditions, cost estimates
-
-### AI Crop Recommender
-Get data-driven crop recommendations based on:
-- Soil type (loamy, sandy, clay, etc.)
-- Soil pH (4.5-8.0 range)
-- Climate zone (tropical, arid, temperate)
-- Rainfall (300-2000mm/year)
-- Temperature (15-35°C)
-- Growing season (rainy/dry/year-round)
-- Experience level (beginner/intermediate/expert)
-- Budget category (low/medium/high)
-- Irrigation availability
-
-**15 Nigerian Crops:** Maize, Rice, Cassava, Yam, Tomato, Pepper, Beans, Groundnut, Sorghum, Millet, Okra, Watermelon, Cucumber, Cabbage, Onion
-
-**Output:** Top 5 recommendations, suitability scores, risk factors, success factors, market potential
-
-## 🎯 Upcoming Milestones
-
-### Milestone 4: Payments & Wallet System (Pending)
-- Wallet functionality
-- Payment integration
-- Transaction history
-- Escrow for contracts
-
-### Milestone 7: Admin System
-- Super Admin (platform management)
-- Moderators (content/user moderation)
-- Support Staff (customer assistance)
-- Three-tier privilege system
-
-### Milestone 7.5: Community Forum
-- Discussion boards
-- Knowledge sharing
-- Farmer-to-farmer support
-- Topic categorization
-
-### Milestone 8: Security Hardening
-- Input sanitization
-- Rate limiting
-- SQL injection prevention
-- XSS protection
-- Security audit
-
-### Milestone 9: CI/CD & Deployment
-- Automated testing pipeline
-- GitHub Actions integration
-- Production deployment
-- Monitoring & logging
-- Performance optimization
-
-## 📝 Documentation
-
-Detailed documentation available in:
-- `txts/MILESTONE_6_COMPLETED.md` - Complete Milestone 6 report
-- `Guides/MILESTONE_6_IMPLEMENTATION.md` - Implementation guide
-- `Guides/ADMIN_IMPLEMENTATION_GUIDE.md` - Admin system planning
-- `Guides/GITHUB_PROJECT_SETUP.md` - GitHub project setup
+The API documentation is available via Swagger UI when the application is running:
+*   **URL:** `http://localhost:5000/api/docs`
+*   **Spec:** `openapi.yaml`
 
 ## 🤝 Contributing
 
-This is a learning project. Contributions, suggestions, and feedback are welcome!
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1.  Fork the project
+2.  Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3.  Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4.  Push to the branch (`git push origin feature/AmazingFeature`)
+5.  Open a Pull Request
 
 ## 📄 License
 
-[Your License Here]
+Distributed under the MIT License. See `LICENSE` for more information.
 
-## 👨‍💻 Author
+## 📞 Contact
 
-Prosperr
+**Prosperr** - [GitHub Profile](https://github.com/Pingwyd)
 
----
-
-**Project Status:** Active Development | **Completion:** 67% (6/9 milestones)
-#   F L B - E x t e n d e d  
- #   F L B - E x t e n d e d  
- 
+Project Link: [https://github.com/Pingwyd/FLB-Extended](https://github.com/Pingwyd/FLB-Extended)
