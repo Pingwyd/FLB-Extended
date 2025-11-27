@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-transparent min-h-screen" x-data="marketplace()">
+    <!-- Hero Section -->
+    <div class="relative bg-primary-700 py-16 overflow-hidden">
+        <div class="absolute inset-0">
+            <img src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+                alt="Marketplace background" class="w-full h-full object-cover opacity-20">
+        </div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-4xl font-extrabold text-white sm:text-5xl md:text-6xl drop-shadow-md">
+                Agricultural Marketplace
+            </h1>
+            <p class="mt-4 max-w-2xl mx-auto text-xl text-primary-50 drop-shadow-sm">
+                Buy and sell fresh produce, lease land, and find equipment.
+            </p>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto py-12 sm:px-6 lg:px-8">
+        <!-- Search and Filters -->
+        <div
+            class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-10 -mt-16 relative z-10 mx-4 sm:mx-0 transition-colors duration-200">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="md:col-span-1">
+                    <label for="search" class="sr-only">Search</label>
+                    <div class="relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" x-model="searchQuery" @input.debounce.500ms="fetchListings"
+                            class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-16 sm:text-sm border-gray-300 dark:border-gray-600 rounded-md py-3 dark:bg-gray-700 dark:text-white"
+                            style="padding-left: 3.5rem;" placeholder="Search...">
+                    </div>
+                </div>
+                <div>
+                    <select x-model="selectedCategory" @change="fetchListings"
+                        class="block w-full pl-3 pr-10 py-3 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md dark:bg-gray-700 dark:text-white">
+                        <option value="">All Categories</option>
+                        <option value="land_sale">Land for Sale</option>
+                        <option value="land_rent">Land for Rent</option>
+                    </select>
+                </div>
+                <div>
+                    <select x-model="sortBy" @change="fetchListings"
+                        class="block w-full pl-3 pr-10 py-3 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md dark:bg-gray-700 dark:text-white">
+                        <option value="recent">Most Recent</option>
+                        <option value="price_low">Price: Low to High</option>
+                        <option value="price_high">Price: High to Low</option>
+                        <option value="oldest">Oldest</option>
+                    </select>
+                </div>
+                <div>
+                    <button @click="fetchListings"
+                        class="w-full flex justify-center items-center px-4 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors duration-200">
+                        Filter Results
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Listings Grid -->
+        <div class="px-4 sm:px-0">
+            <div x-show="loading" class="flex justify-center py-20">
+                <div class="flex flex-col items-center">
+                    <i class="fa-solid fa-circle-notch fa-spin text-5xl text-primary-600 mb-4"></i>
+                    <p class="text-gray-500 dark:text-gray-400">Loading listings...</p>
+                </div>
+            </div>
+
+            <div x-show="!loading && listings.length === 0"
+                class="text-center py-20 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 transition-colors duration-200">
+                <i class="fa-solid fa-box-open text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white">No listings found</h3>
+                <p class="text-gray-500 dark:text-gray-400 mt-2">Try adjusting your search or filters.</p>
+            </div>
+
+            <div x-show="!loading" class="grid grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
+                <template x-for="listing in listings" :key="listing.id">
+                    <div
+                        class="group relative bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        <div class="w-full h-64 bg-gray-200 dark:bg-gray-700 relative overflow-hidden">
+                            <!-- Placeholder image logic -->
+                            <img :src="(listing.images && listing.images.length > 0) ? listing.images[0] : 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80'"
+                                alt="Listing image"
+                                class="w-full h-full object-center object-cover transition-transform duration-500 group-hover:scale-110">
+
+                            <!-- Boost Badge -->
+                            <div x-show="listing.boost_expiry && new Date(listing.boost_expiry) > new Date()"
+                                class="absolute top-4 right-4 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full flex items-center shadow-md">
+                                <i class="fa-solid fa-bolt mr-1"></i> Boosted
+                            </div>
+
+                            <!-- Type Badge -->
+                            <div
+                                class="absolute bottom-4 left-4 bg-black bg-opacity-60 text-white text-xs font-semibold px-3 py-1 rounded-full backdrop-blur-sm">
+                                <span x-text="listing.listing_type"></span>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-xl font-bold text-gray-900 dark:text-white line-clamp-1">
+                                    <a :href="`/marketplace/${listing.id}`"
+                                        class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                                        <span aria-hidden="true" class="absolute inset-0"></span>
+                                        <span x-text="listing.title"></span>
+                                    </a>
+                                </h3>
+                            </div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4 flex items-center">
+                                <i class="fa-solid fa-location-dot mr-1.5 text-gray-400"></i>
+                                <span x-text="`${listing.location_area}, ${listing.location_state}`"></span>
+                            </p>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm line-clamp-2 mb-4 h-10"
+                                x-text="listing.description"></p>
+
+                            <div
+                                class="pt-4 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                                <p class="text-2xl font-bold text-primary-600"
+                                    x-text="'₦' + listing.price.toLocaleString()"></p>
+                                <span
+                                    class="text-primary-600 hover:text-primary-800 text-sm font-medium flex items-center group-hover:translate-x-1 transition-transform">
+                                    View Details <i class="fa-solid fa-arrow-right ml-1"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </main>
+</div>
+
+
+<script>
+    function marketplace() {
+        return {
+            listings: [],
+            loading: true,
+            searchQuery: '',
+            selectedCategory: '',
+            sortBy: 'recent',
+
+            async fetchListings() {
+                this.loading = true;
+                try {
+                    // Construct query params
+                    let url = '/listings';
+                    const params = new URLSearchParams();
+                    if (this.searchQuery) params.append('q', this.searchQuery);
+                    if (this.selectedCategory) params.append('listing_type', this.selectedCategory);
+                    if (this.sortBy) params.append('sort_by', this.sortBy);
+
+                    // If params exist, append to url
+                    if (params.toString()) url += '?' + params.toString();
+
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        this.listings = await response.json();
+                    } else {
+                        console.error('Failed to fetch listings');
+                    }
+                } catch (error) {
+                    console.error('Error fetching listings:', error);
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            init() {
+                this.fetchListings();
+            }
+        }
+    }
+</script>
+{% endblock %}

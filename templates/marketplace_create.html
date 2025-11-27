@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-transparent min-h-screen py-8" x-data="createListing()">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Create New Listing</h3>
+                <div class="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
+                    <p>Post your land for sale or rent.</p>
+                </div>
+                <form class="mt-5 space-y-6" @submit.prevent="submitListing">
+                    <!-- Title -->
+                    <div>
+                        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Title
+                            <span class="text-red-500">*</span></label>
+                        <div class="mt-1">
+                            <input type="text" name="title" id="title" x-model="formData.title" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                                placeholder="e.g. 5 Acres Farmland">
+                        </div>
+                    </div>
+
+                    <!-- Listing Type (Land Sale or Rent) -->
+                    <div>
+                        <label for="listing_type"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Listing Type <span
+                                class="text-red-500">*</span></label>
+                        <div class="mt-1">
+                            <select id="listing_type" name="listing_type" x-model="formData.listing_type" required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md py-3 dark:bg-gray-700 dark:text-white">
+                                <option value="land_sale">Land for Sale</option>
+                                <option value="land_rent">Land for Rent</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Price -->
+                    <div>
+                        <label for="price" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Price (₦)
+                            <span class="text-red-500">*</span></label>
+                        <div class="mt-1 relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 dark:text-gray-400 sm:text-sm">₦</span>
+                            </div>
+                            <input type="number" name="price" id="price" x-model="formData.price" required
+                                class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-16 sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                                style="padding-left: 3.5rem;" placeholder="0.00">
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label for="description"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description <span
+                                class="text-red-500">*</span></label>
+                        <div class="mt-1">
+                            <textarea id="description" name="description" rows="3" x-model="formData.description"
+                                required
+                                class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md p-3 dark:bg-gray-700 dark:text-white"
+                                placeholder="Describe your land..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Images -->
+                    <div>
+                        <label for="images" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Images
+                            <span class="text-red-500">*</span></label>
+                        <div class="mt-1">
+                            <input type="file" id="images" name="images" multiple accept="image/*" required
+                                @change="handleImageUpload"
+                                class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-gray-700 dark:file:text-gray-300">
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Upload at least 1 image (required).
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Videos -->
+                    <div>
+                        <label for="videos"
+                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Videos</label>
+                        <div class="mt-1">
+                            <input type="file" id="videos" name="videos" multiple accept="video/*"
+                                @change="handleVideoUpload"
+                                class="block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-gray-700 dark:file:text-gray-300">
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Upload a short video showing your
+                                land (optional).</p>
+                        </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                        <div class="sm:col-span-3">
+                            <label for="location_state"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">State <span
+                                    class="text-red-500">*</span></label>
+                            <div class="mt-1">
+                                <input type="text" name="location_state" id="location_state"
+                                    x-model="formData.location_state" required
+                                    class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-3">
+                            <label for="location_area"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">Area/City <span
+                                    class="text-red-500">*</span></label>
+                            <div class="mt-1">
+                                <input type="text" name="location_area" id="location_area"
+                                    x-model="formData.location_area" required
+                                    class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="flex justify-end">
+                        <button type="button"
+                            class="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 mr-3"
+                            onclick="window.history.back()">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                            class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            Create Listing
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function createListing() {
+        return {
+            formData: {
+                title: '',
+                listing_type: 'land_sale',
+                price: '',
+                description: '',
+                location_state: '',
+                location_area: ''
+            },
+            imageFiles: [],
+            videoFiles: [],
+            handleImageUpload(event) {
+                this.imageFiles = event.target.files;
+            },
+            handleVideoUpload(event) {
+                this.videoFiles = event.target.files;
+            },
+            async submitListing() {
+                const userStr = localStorage.getItem('flb_user');
+                if (!userStr) {
+                    alert('Please login to create a listing.');
+                    window.location.href = '/login-page';
+                    return;
+                }
+                const user = JSON.parse(userStr);
+
+                // Validate that at least one image or video is uploaded
+                if (this.imageFiles.length === 0 && this.videoFiles.length === 0) {
+                    alert('Please upload at least one image or video for your listing.');
+                    return;
+                }
+
+                try {
+                    const formData = new FormData();
+                    formData.append('owner_id', user.id);
+                    formData.append('title', this.formData.title);
+                    formData.append('category', 'land');
+                    formData.append('listing_type', this.formData.listing_type);
+                    formData.append('price', this.formData.price);
+                    formData.append('description', this.formData.description);
+                    formData.append('location_state', this.formData.location_state);
+                    formData.append('location_area', this.formData.location_area);
+
+                    // Append images
+                    for (let i = 0; i < this.imageFiles.length; i++) {
+                        formData.append('images', this.imageFiles[i]);
+                    }
+
+                    // Append videos
+                    for (let i = 0; i < this.videoFiles.length; i++) {
+                        formData.append('videos', this.videoFiles[i]);
+                    }
+
+                    const response = await fetch('/listings/create', {
+                        method: 'POST',
+                        body: formData // No Content-Type header, browser sets it with boundary
+                    });
+
+                    if (response.ok) {
+                        alert('Listing created successfully!');
+                        window.location.href = '/marketplace';
+                    } else {
+                        const data = await response.json();
+                        alert(data.error || 'Failed to create listing.');
+                    }
+                } catch (error) {
+                    console.error('Error creating listing:', error);
+                    alert('An error occurred.');
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

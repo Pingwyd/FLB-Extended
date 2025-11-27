@@ -1,0 +1,186 @@
+openapi: 3.0.0
+info:
+  title: FLB Extended API
+  description: API for the Nigerian Agricultural Platform connecting farmers, workers, and realtors.
+  version: 1.0.0
+servers:
+  - url: http://localhost:5000
+    description: Local Development Server
+
+components:
+  securitySchemes:
+    # Currently using session cookies, but describing a potential Bearer auth for future
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /register:
+    post:
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+                account_type:
+                  type: string
+                  enum: [farmer, realtor, worker]
+      responses:
+        '201':
+          description: User created successfully
+        '400':
+          description: Invalid input or password policy violation
+
+  /login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+
+  /users:
+    get:
+      summary: List all users
+      responses:
+        '200':
+          description: A list of users
+
+  /documents/upload:
+    post:
+      summary: Upload verification document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                document_type:
+                  type: string
+                  enum: [NIN, passport, drivers_license]
+                document_number:
+                  type: string
+      responses:
+        '201':
+          description: Document uploaded
+
+  /produce/calculate:
+    post:
+      summary: Calculate produce costs and profits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                crop_name:
+                  type: string
+                land_size:
+                  type: number
+                season:
+                  type: string
+      responses:
+        '200':
+          description: Calculation results
+
+  /api/wallet/fund:
+    post:
+      summary: Initialize wallet funding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+                amount:
+                  type: number
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Payment initialization details (Interswitch)
+
+  /ratings:
+    post:
+      summary: Submit a rating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rater_id:
+                  type: integer
+                rated_user_id:
+                  type: integer
+                score:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                review:
+                  type: string
+      responses:
+        '201':
+          description: Rating submitted
+
+  /forum/posts:
+    get:
+      summary: Get forum posts
+      parameters:
+        - in: query
+          name: category
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of forum posts
+    post:
+      summary: Create a forum post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                author_id:
+                  type: integer
+                title:
+                  type: string
+                content:
+                  type: string
+                category:
+                  type: string
+      responses:
+        '201':
+          description: Post created

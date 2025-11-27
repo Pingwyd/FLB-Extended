@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-gray-100 h-screen flex" x-data="messagesApp()">
+    <!-- Sidebar -->
+    <div class="w-1/3 bg-white border-r border-gray-200 flex flex-col">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="text-lg font-medium text-gray-900">Messages</h2>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <ul class="divide-y divide-gray-200">
+                <template x-for="conv in conversations" :key="conv.id">
+                    <li @click="selectConversation(conv)" class="px-4 py-4 hover:bg-gray-50 cursor-pointer" :class="{'bg-blue-50': activeConversation && activeConversation.id === conv.id}">
+                        <div class="flex items-center space-x-4">
+                            <div class="flex-shrink-0">
+                                <span class="inline-block h-10 w-10 rounded-full bg-gray-300"></span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate" x-text="conv.name"></p>
+                                <p class="text-sm text-gray-500 truncate" x-text="conv.lastMessage"></p>
+                            </div>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Chat Area -->
+    <div class="flex-1 flex flex-col">
+        <template x-if="activeConversation">
+            <div class="flex-1 flex flex-col h-full">
+                <!-- Header -->
+                <div class="p-4 border-b border-gray-200 bg-white flex justify-between items-center">
+                    <h3 class="text-lg font-medium text-gray-900" x-text="activeConversation.name"></h3>
+                </div>
+
+                <!-- Messages -->
+                <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                    <template x-for="msg in messages" :key="msg.id">
+                        <div class="flex" :class="msg.isMe ? 'justify-end' : 'justify-start'">
+                            <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow-sm" :class="msg.isMe ? 'bg-primary-600 text-white' : 'bg-white text-gray-900'">
+                                <p class="text-sm" x-text="msg.text"></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Input -->
+                <div class="p-4 bg-white border-t border-gray-200">
+                    <form @submit.prevent="sendMessage" class="flex space-x-4">
+                        <input type="text" x-model="newMessage" class="flex-1 focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Type a message...">
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            Send
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </template>
+        <template x-if="!activeConversation">
+            <div class="flex-1 flex items-center justify-center bg-gray-50">
+                <p class="text-gray-500">Select a conversation to start messaging</p>
+            </div>
+        </template>
+    </div>
+</div>
+
+<script>
+    function messagesApp() {
+        return {
+            conversations: [
+                { id: 1, name: 'John Doe', lastMessage: 'Is the land still available?' },
+                { id: 2, name: 'Jane Smith', lastMessage: 'I can start next week.' }
+            ],
+            activeConversation: null,
+            messages: [],
+            newMessage: '',
+            
+            selectConversation(conv) {
+                this.activeConversation = conv;
+                // Mock fetching messages
+                this.messages = [
+                    { id: 1, text: 'Hello!', isMe: false },
+                    { id: 2, text: 'Hi there, how can I help?', isMe: true }
+                ];
+            },
+            sendMessage() {
+                if (!this.newMessage.trim()) return;
+                this.messages.push({
+                    id: Date.now(),
+                    text: this.newMessage,
+                    isMe: true
+                });
+                this.newMessage = '';
+            }
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-8" x-data="workerDetail()">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg border border-gray-200 dark:border-gray-700">
+            <div class="px-4 py-5 sm:px-6 flex items-center">
+                <div class="flex-shrink-0 h-16 w-16 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-600 dark:text-primary-300 text-2xl font-bold border border-primary-200 dark:border-primary-700">
+                    <span x-text="worker.name ? worker.name.charAt(0) : '?'"></span>
+                </div>
+                <div class="ml-4">
+                    <div class="flex items-center">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" x-text="worker.name"></h3>
+                        <span x-show="worker.verified" class="ml-2 text-blue-500" title="Verified Worker">
+                            <i class="fas fa-check-circle"></i>
+                        </span>
+                        <span x-show="!worker.verified" class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300" title="Unverified Worker">
+                            Unverified
+                        </span>
+                    </div>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400" x-text="worker.location"></p>
+                </div>
+                <div class="ml-auto">
+                    <button class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                        Hire Worker
+                    </button>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 dark:border-gray-700 px-4 py-5 sm:px-6">
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Skills</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white">
+                            <div class="flex flex-wrap gap-2">
+                                <template x-for="skill in worker.skills" :key="skill">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" x-text="skill"></span>
+                                </template>
+                            </div>
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Rating</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white flex items-center">
+                            <i class="fa-solid fa-star text-yellow-400 mr-1"></i>
+                            <span x-text="worker.rating + ' / 5'"></span>
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">About</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white" x-text="worker.bio"></dd>
+                    </div>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function workerDetail() {
+        return {
+            worker: {},
+            loading: true,
+
+            async init() {
+                // Extract worker ID from URL path: /workers/123
+                const pathParts = window.location.pathname.split('/');
+                const workerId = pathParts[pathParts.length - 1];
+                
+                if (workerId && !isNaN(workerId)) {
+                    await this.fetchWorker(workerId);
+                } else {
+                    // Fallback or error handling
+                    console.error("No worker ID found in URL");
+                    this.loading = false;
+                }
+            },
+
+            async fetchWorker(id) {
+                try {
+                    const response = await fetch(`/workers/${id}`, {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+                    if (response.ok) {
+                        this.worker = await response.json();
+                        // Map backend fields to frontend expected fields if necessary
+                        this.worker.location = `${this.worker.location_area}, ${this.worker.location_state}`;
+                    } else {
+                        console.error('Failed to fetch worker details');
+                    }
+                } catch (error) {
+                    console.error('Error fetching worker:', error);
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

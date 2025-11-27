@@ -1,0 +1,645 @@
+{% extends "base.html" %}
+
+{% block title %}Community Forum - FLB Extended{% endblock %}
+
+{% block content %}
+<div class="bg-transparent min-h-screen" x-data="forumApp()">
+    <!-- Hero Section -->
+    <div class="relative bg-yellow-600 dark:bg-yellow-800 py-12 transition-colors duration-200">
+        <div class="absolute inset-0 overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+                alt="Field background" class="w-full h-full object-cover opacity-20">
+        </div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-3xl font-extrabold text-white sm:text-4xl md:text-5xl drop-shadow-md">
+                Community Forum
+            </h1>
+            <p class="mt-4 max-w-2xl mx-auto text-xl text-yellow-50 drop-shadow-sm">
+                Discuss farming techniques, ask questions, and share knowledge.
+            </p>
+            <div class="mt-8">
+                <button @click="openCreateModal()" type="button"
+                    class="inline-flex items-center px-6 py-3 border border-transparent rounded-md shadow-sm text-base font-medium text-yellow-700 bg-white hover:bg-yellow-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 dark:bg-gray-800 dark:text-yellow-400 dark:hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-plus mr-2"></i> Start New Discussion
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Sidebar (Categories & Sorting) -->
+            <div class="lg:col-span-1">
+                <div
+                    class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden sticky top-6 transition-colors duration-200">
+                    <!-- Search -->
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Search</h3>
+                        <div class="relative rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <input type="text" x-model="searchQuery" @input.debounce.500ms="fetchPosts"
+                                class="focus:ring-yellow-500 focus:border-yellow-500 block w-full pl-16 sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-600 dark:text-white"
+                                style="padding-left: 3.5rem;" placeholder="Search discussions...">
+                        </div>
+                    </div>
+
+                    <!-- Sorting -->
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2">Sort By</h3>
+                        <select x-model="sortBy" @change="fetchPosts"
+                            class="block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 sm:text-sm rounded-md dark:bg-gray-600 dark:text-white">
+                            <option value="recent">Most Recent</option>
+                            <option value="oldest">Oldest</option>
+                            <option value="popular">Most Popular</option>
+                            <option value="unpopular">Least Popular</option>
+                        </select>
+                    </div>
+
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">Categories</h3>
+                    </div>
+                    <nav class="p-2" aria-label="Sidebar">
+                        <template x-for="cat in categories" :key="cat.id">
+                            <a href="#" @click.prevent="filterCategory(cat.id)"
+                                :class="{'bg-yellow-50 text-yellow-700 border-l-4 border-yellow-500 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-500': selectedCategory === cat.id, 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white border-l-4 border-transparent': selectedCategory !== cat.id}"
+                                class="group flex items-center px-3 py-3 text-sm font-medium transition-colors">
+                                <span class="truncate" x-text="cat.name"></span>
+                            </a>
+                        </template>
+                    </nav>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lg:col-span-3">
+                <!-- Loading State -->
+                <div x-show="isLoading" class="text-center py-12">
+                    <i class="fas fa-spinner fa-spin text-4xl text-yellow-600"></i>
+                    <p class="mt-2 text-gray-500 dark:text-gray-400">Loading discussions...</p>
+                </div>
+
+                <!-- Posts List -->
+                <div x-show="!isLoading && !selectedPost" class="space-y-4">
+                    <template x-for="post in filteredPosts" :key="post.id">
+                        <div class="bg-white dark:bg-gray-800 shadow-sm rounded-lg p-6 hover:shadow-md transition-shadow cursor-pointer border border-gray-200 dark:border-gray-700"
+                            @click="viewPost(post)" :class="{'border-l-4 border-yellow-500': post.is_pinned}">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center space-x-2">
+                                    <span x-show="post.is_pinned" class="text-yellow-600" title="Pinned Post"><i
+                                            class="fas fa-thumbtack"></i></span>
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+                                        x-text="formatCategory(post.category)"></span>
+                                </div>
+                                <span class="text-sm text-gray-500 dark:text-gray-400"
+                                    x-text="formatDate(post.created_at)"></span>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2 hover:text-yellow-600 transition-colors"
+                                x-text="post.title"></h3>
+                            <p class="text-gray-600 dark:text-gray-300 line-clamp-2 mb-4" x-text="post.content"></p>
+                            <div class="flex items-center text-sm text-gray-500 dark:text-gray-400 space-x-6">
+                                <span class="flex items-center">
+                                    <div
+                                        class="h-6 w-6 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center mr-2 text-xs font-bold text-gray-600 dark:text-gray-300">
+                                        <span x-text="(post.author_name || 'U').charAt(0)"></span>
+                                    </div>
+                                    <span x-text="post.author_name || 'User ' + post.author_id"></span>
+                                </span>
+                                <span class="flex items-center">
+                                    <i class="fas fa-comment mr-1.5 text-gray-400"></i>
+                                    <span x-text="post.comments_count || 0"></span>&nbsp;comments
+                                </span>
+                                <span class="flex items-center">
+                                    <i class="fas fa-arrow-up mr-1.5 text-gray-400"></i>
+                                    <span x-text="post.upvotes || 0"></span>&nbsp;votes
+                                </span>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div x-show="filteredPosts.length === 0"
+                        class="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                        <i class="fas fa-comments text-4xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                        <p class="text-gray-500 dark:text-gray-400">No discussions found in this category.</p>
+                    </div>
+                </div>
+
+
+                <!-- Single Post View -->
+                <div x-show="selectedPost" class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <button @click="selectedPost = null"
+                            class="mb-4 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 flex items-center">
+                            <i class="fas fa-arrow-left mr-2"></i> Back to discussions
+                        </button>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-2">
+                                <span x-show="selectedPost?.is_pinned" class="text-green-600 dark:text-green-400"
+                                    title="Pinned Post"><i class="fas fa-thumbtack"></i></span>
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                                    x-text="formatCategory(selectedPost?.category)"></span>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <button
+                                    x-show="currentUser && ['admin', 'super_admin', 'moderator'].includes(currentUser.account_type)"
+                                    @click.stop="pinPost(selectedPost.id)"
+                                    class="text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 text-sm">
+                                    <i class="fas fa-thumbtack mr-1"></i> <span
+                                        x-text="selectedPost?.is_pinned ? 'Unpin' : 'Pin'"></span>
+                                </button>
+                                <span class="text-sm text-gray-500 dark:text-gray-400"
+                                    x-text="formatDate(selectedPost?.created_at)"></span>
+                            </div>
+                        </div>
+                        <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-4" x-text="selectedPost?.title">
+                        </h1>
+                        <div class="prose max-w-none text-gray-700 dark:text-gray-300 mb-6 whitespace-pre-wrap"
+                            x-text="selectedPost?.content"></div>
+
+                        <div
+                            class="flex items-center justify-between pt-4 border-t border-gray-100 dark:border-gray-700">
+                            <div class="flex items-center space-x-4">
+                                <span class="font-medium text-gray-900 dark:text-white"
+                                    x-text="selectedPost?.author_name || 'User ' + selectedPost?.author_id"></span>
+                                <span x-show="selectedPost?.author_is_banned"
+                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Banned</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button @click="votePost(selectedPost.id)"
+                                    class="flex items-center text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400">
+                                    <i class="fas fa-arrow-up mr-1"></i>
+                                    <span x-text="selectedPost?.upvotes || 0"></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments Section -->
+                    <div class="bg-gray-50 dark:bg-gray-900 p-6">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Comments</h3>
+
+                        <!-- Comment Form -->
+                        <div class="mb-8">
+                            <form @submit.prevent="submitComment">
+                                <div class="mb-4">
+                                    <label for="comment" class="sr-only">Add a comment</label>
+                                    <textarea id="comment" x-model="newComment" rows="3"
+                                        class="shadow-sm block w-full focus:ring-green-500 focus:border-green-500 sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-800 dark:text-white"
+                                        placeholder="Add a comment..."></textarea>
+                                </div>
+                                <div class="flex justify-end">
+                                    <button type="submit"
+                                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                        Post Comment
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Comments List -->
+                        <div class="space-y-4" x-html="renderComments(postComments)"></div>
+                        <div x-show="postComments.length === 0"
+                            class="text-center py-4 text-gray-500 dark:text-gray-400">
+                            No comments yet. Be the first to share your thoughts!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Post Modal -->
+    <div x-show="showCreateModal" class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true" style="display: none;">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"
+                @click="showCreateModal = false"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form @submit.prevent="createPost">
+                    <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
+                                    id="modal-title">
+                                    Start a New Discussion
+                                </h3>
+                                <div class="mt-4 space-y-4">
+                                    <div>
+                                        <label for="title"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
+                                        <input type="text" id="title" x-model="newPost.title" required
+                                            class="mt-1 focus:ring-green-500 focus:border-green-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white">
+                                    </div>
+                                    <div>
+                                        <label for="category"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+                                        <select id="category" x-model="newPost.category" required
+                                            class="mt-1 block w-full py-2 px-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm dark:text-white">
+                                            <option value="general">General Discussion</option>
+                                            <option value="planting_advice">Planting Advice</option>
+                                            <option value="pest_control">Pest Control</option>
+                                            <option value="equipment">Equipment</option>
+                                            <option value="marketplace">Marketplace</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="content"
+                                            class="block text-sm font-medium text-gray-700 dark:text-gray-300">Content</label>
+                                        <textarea id="content" x-model="newPost.content" rows="4" required
+                                            class="mt-1 focus:ring-green-500 focus:border-green-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit"
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Post
+                        </button>
+                        <button type="button" @click="showCreateModal = false"
+                            class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-500 shadow-sm px-4 py-2 bg-white dark:bg-gray-600 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        // Remove the button
+        btn.remove();
+
+        // Render the hidden comments
+        const html = window.renderCommentsGlobal(comments, depth);
+
+        // Append the new HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        while (tempDiv.firstChild) {
+        container.appendChild(tempDiv.firstChild);
+        }
+        };
+
+        function forumApp() {
+        return {
+        posts: [],
+        // ... existing properties ...
+        categories: [
+        { id: 'all', name: 'All Discussions' },
+        { id: 'general', name: 'General Discussion' },
+        { id: 'planting_advice', name: 'Planting Advice' },
+        { id: 'pest_control', name: 'Pest Control' },
+        { id: 'equipment', name: 'Equipment' },
+        { id: 'marketplace', name: 'Marketplace' }
+        ],
+        selectedCategory: 'all',
+        sortBy: 'recent',
+        isLoading: true,
+        showCreateModal: false,
+        selectedPost: null,
+        postComments: [],
+        newComment: '',
+        replyTo: null,
+        replyContent: '',
+        currentUser: null,
+        searchQuery: '',
+        newPost: {
+        title: '',
+        category: 'general',
+        content: ''
+        },
+
+        init() {
+        const userStr = localStorage.getItem('flb_user');
+        if (userStr) {
+        this.currentUser = JSON.parse(userStr);
+        }
+        this.fetchPosts();
+
+        // Event listener for reply trigger
+        window.addEventListener('trigger-reply', (e) => {
+        this.replyTo = (this.replyTo === e.detail.id ? null : e.detail.id);
+        if (this.replyTo) {
+        this.$nextTick(() => {
+        const input = document.getElementById(`reply-input-${this.replyTo}`);
+        if (input) input.focus();
+        });
+        }
+        });
+
+        // Event listener for global reply submission
+        window.addEventListener('submit-reply-global', async (e) => {
+        const { id, content } = e.detail;
+        await this.postComment(content, id);
+        this.replyTo = null;
+        });
+
+        // Expose render function globally for the expand button
+        window.renderCommentsGlobal = this.renderComments.bind(this);
+        },
+
+        renderComments(comments, depth = 0) {
+        if (!comments || comments.length === 0) return '';
+
+        let html = '';
+
+        // Logic for "Show more"
+        // Only limit if depth > 0 (replies), show all top-level comments?
+        // User said "one it reaches like 5 replies I shows expand more".
+        // So apply to all levels.
+        const limit = 5;
+        const visibleCount = (comments.length > limit) ? limit : comments.length;
+        const hiddenCount = comments.length - visibleCount;
+
+        comments.slice(0, visibleCount).forEach(comment => {
+        const isBanned = comment.author_is_banned;
+        const bannedBadge = isBanned ? '<span
+            class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Banned</span>'
+        : '';
+        const authorName = comment.author_name || 'User ' + comment.author_id;
+
+        // Indentation for depth
+        // We use nested divs for structure, but visual indentation is handled by margin-left in the container
+
+        html += `
+        <div class="comment-node bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-4"
+            id="comment-${comment.id}">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center">
+                    <span class="font-medium text-gray-900 dark:text-white">${authorName}</span>
+                    ${bannedBadge}
+                </div>
+                <span class="text-sm text-gray-500 dark:text-gray-400">${this.formatDate(comment.created_at)}</span>
+            </div>
+            <p class="mt-2 text-gray-600 dark:text-gray-300">${comment.content}</p>
+
+            <div class="mt-2">
+                <button onclick="window.triggerReply(${comment.id})"
+                    class="text-sm text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 font-medium focus:outline-none">
+                    <i class="fas fa-reply mr-1"></i> Reply
+                </button>
+            </div>
+
+            <div id="reply-container-${comment.id}" class="mt-4 ml-4"
+                style="display: ${this.replyTo === comment.id ? 'block' : 'none'}">
+                <form onsubmit="event.preventDefault(); window.submitReplyGlobal(${comment.id})">
+                    <textarea id="reply-input-${comment.id}" rows="2"
+                        class="shadow-sm block w-full focus:ring-green-500 focus:border-green-500 sm:text-sm border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                        placeholder="Write a reply..."></textarea>
+                    <div class="mt-2 flex justify-end">
+                        <button type="submit"
+                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                            Reply
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Nested Replies -->
+            <div class="mt-4 ml-4 border-l-2 border-gray-100 dark:border-gray-700 pl-4">
+                ${this.renderComments(comment.replies, depth + 1)}
+            </div>
+        </div>
+        `;
+        });
+
+        if (hiddenCount > 0) {
+        html += `
+        <button
+            onclick="window.expandComments(this, '${encodeURIComponent(JSON.stringify(comments.slice(visibleCount)))}', ${depth})"
+            class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 mt-2 mb-4">
+            Show ${hiddenCount} more replies...
+        </button>
+        `;
+        }
+
+        return html;
+        },
+
+        // ... existing methods ...
+
+        async fetchPosts() {
+        this.isLoading = true;
+        try {
+        let url = `/forum/posts?sort_by=${this.sortBy}`;
+        if (this.searchQuery) {
+        url += `&q=${encodeURIComponent(this.searchQuery)}`;
+        }
+        const response = await fetch(url);
+        if (response.ok) {
+        this.posts = await response.json();
+        // Sort pinned posts to top (client side override for pinned)
+        this.posts.sort((a, b) => (b.is_pinned === a.is_pinned) ? 0 : b.is_pinned ? 1 : -1);
+        }
+        } catch (error) {
+        console.error('Error fetching posts:', error);
+        } finally {
+        this.isLoading = false;
+        }
+        },
+
+        get filteredPosts() {
+        if (this.selectedCategory === 'all') {
+        return this.posts;
+        }
+        return this.posts.filter(post => post.category === this.selectedCategory);
+        },
+
+        filterCategory(categoryId) {
+        this.selectedCategory = categoryId;
+        this.selectedPost = null;
+        },
+
+        formatCategory(category) {
+        if (!category) return '';
+        return category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+        },
+
+        formatDate(dateString) {
+        if (!dateString) return '';
+        return new Date(dateString).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+        },
+
+        openCreateModal() {
+        this.showCreateModal = true;
+        },
+
+        async createPost() {
+        const userStr = localStorage.getItem('flb_user');
+        if (!userStr) {
+        alert('Please login to create a post.');
+        window.location.href = '/login-page';
+        return;
+        }
+        const user = JSON.parse(userStr);
+
+        try {
+        const payload = {
+        ...this.newPost,
+        author_id: user.id
+        };
+
+        const response = await fetch('/forum/posts', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+        this.showCreateModal = false;
+        this.newPost = { title: '', category: 'general', content: '' };
+        this.fetchPosts();
+        } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to create post.');
+        }
+        } catch (error) {
+        console.error('Error creating post:', error);
+        alert('An error occurred.');
+        }
+        },
+
+        async viewPost(post) {
+        this.selectedPost = post;
+        try {
+        const response = await fetch(`/forum/posts/${post.id}`);
+        if (response.ok) {
+        const detailedPost = await response.json();
+        this.selectedPost = detailedPost;
+        this.postComments = detailedPost.comments || [];
+        }
+        } catch (error) {
+        console.error('Error fetching post details:', error);
+        }
+        },
+
+        async submitComment() {
+        if (!this.newComment.trim()) return;
+        await this.postComment(this.newComment);
+        this.newComment = '';
+        },
+
+        async submitReply(parentId) {
+        if (!this.replyContent.trim()) return;
+        await this.postComment(this.replyContent, parentId);
+        this.replyContent = '';
+        this.replyTo = null;
+        },
+
+        async postComment(content, parentId = null) {
+        const userStr = localStorage.getItem('flb_user');
+        if (!userStr) {
+        alert('Please login to comment.');
+        window.location.href = '/login-page';
+        return;
+        }
+        const user = JSON.parse(userStr);
+
+        try {
+        const payload = {
+        content: content,
+        author_id: user.id
+        };
+        if (parentId) {
+        payload.parent_id = parentId;
+        }
+
+        const response = await fetch(`/forum/posts/${this.selectedPost.id}/comments`, {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+        this.viewPost(this.selectedPost); // Refresh comments
+        } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to post comment.');
+        }
+        } catch (error) {
+        console.error('Error posting comment:', error);
+        }
+        },
+
+        async votePost(postId) {
+        if (!this.currentUser) {
+        alert('Please login to vote.');
+        return;
+        }
+
+        try {
+        const response = await fetch(`/forum/posts/${postId}/vote`, {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+        vote_type: 'upvote',
+        user_id: this.currentUser.id
+        })
+        });
+
+        if (response.ok) {
+        const data = await response.json();
+        // Update local state
+        if (this.selectedPost && this.selectedPost.id === postId) {
+        this.selectedPost.upvotes = data.upvotes;
+        }
+        const postIndex = this.posts.findIndex(p => p.id === postId);
+        if (postIndex !== -1) {
+        this.posts[postIndex].upvotes = data.upvotes;
+        }
+        } else {
+        if (response.status === 401) {
+        window.location.href = '/login-page';
+        } else {
+        alert('Failed to vote.');
+        }
+        }
+        } catch (error) {
+        console.error('Error voting:', error);
+        }
+        },
+
+        async pinPost(postId) {
+        if (!this.currentUser) return;
+
+        try {
+        const response = await fetch(`/forum/posts/${postId}/pin`, {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+        user_id: this.currentUser.id
+        })
+        });
+
+        if (response.ok) {
+        const data = await response.json();
+        if (this.selectedPost && this.selectedPost.id === postId) {
+        this.selectedPost.is_pinned = data.is_pinned;
+        }
+        this.fetchPosts(); // Refresh list to re-sort
+        } else {
+        alert('Failed to pin post.');
+        }
+        } catch (error) {
+        console.error('Error pinning post:', error);
+        }
+        }
+        }
+        }
+        </script>
+        {% endblock %}

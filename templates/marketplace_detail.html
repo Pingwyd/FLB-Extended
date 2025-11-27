@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-8" x-data="listingDetail()">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg">
+            <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
+                <div>
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white"
+                        x-text="listing.title || 'Loading...'"></h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400" x-text="listing.category"></p>
+                </div>
+                <div>
+                    <span
+                        class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                        x-text="'₦' + (listing.price || '0.00')"></span>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 dark:border-gray-700 px-4 py-5 sm:px-6">
+                <div class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Description</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100" x-text="listing.description"></dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Location</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100"
+                            x-text="`${listing.location_area}, ${listing.location_state}`"></dd>
+                    </div>
+                    <div class="sm:col-span-2" x-show="listing.images && listing.images.length > 0">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Images</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                                <template x-for="image in listing.images" :key="image">
+                                    <div
+                                        class="aspect-w-1 aspect-h-1 bg-gray-200 dark:bg-gray-700 rounded-lg overflow-hidden relative group">
+                                        <img :src="image" alt="Listing Image"
+                                            class="object-cover w-full h-full cursor-pointer hover:opacity-75 transition"
+                                            @click="openImage(image)">
+                                    </div>
+                                </template>
+                            </div>
+                        </dd>
+                    </div>
+
+                    <div class="sm:col-span-2" x-show="listing.videos && listing.videos.length > 0">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Videos</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <template x-for="video in listing.videos" :key="video">
+                                    <div class="bg-black rounded-lg overflow-hidden">
+                                        <video controls class="w-full h-auto">
+                                            <source :src="video" type="video/mp4">
+                                            Your browser does not support the video tag.
+                                        </video>
+                                    </div>
+                                </template>
+                            </div>
+                        </dd>
+                    </div>
+                    <div class="sm:col-span-2 mt-4">
+                        <button @click="showContactModal = true"
+                            class="w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                            <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                            Contact Seller
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Seller Modal -->
+    <div x-show="showContactModal" class="fixed z-50 inset-0 overflow-y-auto" aria-labelledby="modal-title"
+        role="dialog" aria-modal="true" style="display: none;">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-500 dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75 transition-opacity"
+                aria-hidden="true" @click="showContactModal = false"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div
+                            class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-primary-100 dark:bg-primary-900 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-primary-600 dark:text-primary-400" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                            </svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left flex-1">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+                                Contact Seller
+                            </h3>
+                            <div class="mt-4">
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                    Send a message about "<span x-text="listing.title"></span>"
+                                </p>
+                                <textarea x-model="contactMessage" rows="4"
+                                    class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white p-3"
+                                    placeholder="Hi, I'm interested in this listing..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" @click="sendMessage"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Send Message
+                    </button>
+                    <button type="button" @click="showContactModal = false"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-600 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function listingDetail() {
+        return {
+            listing: {},
+            loading: true,
+            showContactModal: false,
+            contactMessage: '',
+
+            init() {
+                const pathParts = window.location.pathname.split('/');
+                const id = pathParts[pathParts.length - 1];
+                this.fetchListing(id);
+            },
+
+            async fetchListing(id) {
+                try {
+                    const response = await fetch(`/listings/${id}`);
+                    if (response.ok) {
+                        this.listing = await response.json();
+                    } else {
+                        alert('Failed to load listing details.');
+                    }
+                } catch (error) {
+                    console.error('Error fetching listing:', error);
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            openImage(url) {
+                window.open(url, '_blank');
+            },
+
+            sendMessage() {
+                // Check if user is logged in
+                const userStr = localStorage.getItem('flb_user');
+                if (!userStr) {
+                    alert('Please login to contact the seller.');
+                    window.location.href = '/login-page';
+                    return;
+                }
+
+                const user = JSON.parse(userStr);
+
+                // Check if user is trying to contact themselves
+                if (this.listing.owner_id === user.id) {
+                    alert('You cannot contact yourself!');
+                    return;
+                }
+
+                if (!this.contactMessage.trim()) {
+                    alert('Please enter a message.');
+                    return;
+                }
+
+                // Redirect to messages page with pre-filled message
+                // In a full implementation, this would send via API
+                const params = new URLSearchParams({
+                    recipient: this.listing.owner_id,
+                    listing: this.listing.id,
+                    message: this.contactMessage
+                });
+                window.location.href = `/messages?${params.toString()}`;
+            }
+        }
+    }
+</script>
+{% endblock %}

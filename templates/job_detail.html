@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-8" x-data="jobDetail()">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div
+            class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg border border-gray-200 dark:border-gray-700">
+            <div class="px-4 py-5 sm:px-6 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div
+                        class="flex-shrink-0 h-16 w-16 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center text-green-600 dark:text-green-300 text-2xl font-bold border border-green-200 dark:border-green-700">
+                        <i class="fa-solid fa-briefcase"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" x-text="job.title"></h3>
+                        <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400"
+                            x-text="job.location || 'Remote'"></p>
+                    </div>
+                </div>
+                <div>
+                    <span x-show="job.status === 'open'"
+                        class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        Open
+                    </span>
+                    <span x-show="job.status !== 'open'"
+                        class="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300"
+                        x-text="job.status">
+                    </span>
+                </div>
+            </div>
+            <div class="border-t border-gray-200 dark:border-gray-700 px-4 py-5 sm:px-6">
+                <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Salary Range</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white"
+                            x-text="job.salary_range || 'Negotiable'"></dd>
+                    </div>
+                    <div class="sm:col-span-1">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Posted Date</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white" x-text="formatDate(job.created_at)"></dd>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Description</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white whitespace-pre-line"
+                            x-text="job.description"></dd>
+                    </div>
+                    <div class="sm:col-span-2" x-show="job.requirements">
+                        <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Requirements</dt>
+                        <dd class="mt-1 text-sm text-gray-900 dark:text-white whitespace-pre-line"
+                            x-text="job.requirements"></dd>
+                    </div>
+                </dl>
+            </div>
+            <div
+                class="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-right sm:px-6 border-t border-gray-200 dark:border-gray-700">
+                <button @click="applyForJob"
+                    class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                    <i class="fa-solid fa-paper-plane mr-2"></i>
+                    Apply Now
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function jobDetail() {
+        return {
+            job: {},
+            loading: true,
+
+            async init() {
+                const pathParts = window.location.pathname.split('/');
+                const jobId = pathParts[pathParts.length - 1];
+
+                if (jobId && !isNaN(jobId)) {
+                    await this.fetchJob(jobId);
+                } else {
+                    console.error("No job ID found in URL");
+                    this.loading = false;
+                }
+            },
+
+            async fetchJob(id) {
+                try {
+                    const response = await fetch(`/api/jobs/${id}`);
+                    if (response.ok) {
+                        this.job = await response.json();
+                    } else {
+                        console.error('Failed to fetch job details');
+                    }
+                } catch (error) {
+                    console.error('Error fetching job:', error);
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            async applyForJob() {
+                // Check if user is logged in
+                const userStr = localStorage.getItem('flb_user');
+                if (!userStr) {
+                    alert('Please login to apply for this job.');
+                    window.location.href = '/login-page';
+                    return;
+                }
+
+                const user = JSON.parse(userStr);
+
+                // Check if user is trying to apply to their own job
+                if (this.job.farmer_id === user.id) {
+                    alert('You cannot apply to your own job posting!');
+                    return;
+                }
+
+                // For now, show confirmation and redirect to messages
+                // In future, this could create a JobApplication record
+                if (confirm(`Apply for "${this.job.title}"?\n\nThis will send a message to the employer.`)) {
+                    // Redirect to messages with the job poster
+                    window.location.href = `/messages?recipient=${this.job.farmer_id}&job=${this.job.id}`;
+                }
+            },
+
+            formatDate(dateString) {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            }
+        }
+    }
+</script>
+{% endblock %}

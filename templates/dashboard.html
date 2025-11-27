@@ -1,0 +1,408 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - FLB Extended{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-transparent" x-data="dashboard()">
+    <div class="relative bg-primary-800 pb-32">
+        <div class="absolute inset-0">
+            <img class="w-full h-full object-cover"
+                src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
+                alt="Agriculture Background">
+            <div class="absolute inset-0 bg-primary-900 opacity-75 mix-blend-multiply" aria-hidden="true"></div>
+        </div>
+        <header class="relative py-10 z-20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                <h1 class="text-3xl font-bold leading-tight text-white flex flex-wrap items-center gap-3">
+                    <span>Welcome back, <span
+                            x-text="user.full_name ? user.full_name.toLowerCase().replace(/(?:^|\s)\w/g, function(c) { return c.toUpperCase(); }) : ''"></span></span>
+
+                    <!-- Verification Badge -->
+                    <template x-if="['farmer', 'realtor', 'worker'].includes(user.account_type)">
+                        <div class="relative group inline-flex items-center">
+                            <!-- Badge Trigger -->
+                            <span
+                                :class="user.verified ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900 dark:text-green-300 dark:border-green-700' : 'bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700'"
+                                class="px-3 py-1 rounded-full text-xs font-medium cursor-help flex items-center gap-1.5 border shadow-sm transition-transform hover:scale-105">
+                                <i
+                                    :class="user.verified ? 'fa-solid fa-check-circle' : 'fa-solid fa-exclamation-circle'"></i>
+                                <span x-text="user.verified ? 'Verified' : 'Unverified'"></span>
+                            </span>
+
+                            <!-- Tooltip -->
+                            <div
+                                class="absolute left-0 top-full mt-3 w-72 p-4 bg-white dark:bg-gray-800 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 text-sm text-gray-700 dark:text-gray-300 border border-gray-100 dark:border-gray-700 transform origin-top-left">
+                                <!-- Verified Content -->
+                                <template x-if="user.verified">
+                                    <div class="text-center">
+                                        <div class="text-green-500 text-3xl mb-2 animate-bounce"><i
+                                                class="fa-solid fa-shield-heart"></i></div>
+                                        <p class="font-bold text-gray-900 dark:text-white text-base">You're fully
+                                            verified!</p>
+                                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                                            Awesome! You're a trusted member of the FLB community. You have unlocked
+                                            full access to all features, higher limits, and the trust of your peers.
+                                            Keep growing! 🌱✨
+                                        </p>
+                                    </div>
+                                </template>
+
+                                <!-- Unverified Content -->
+                                <template x-if="!user.verified">
+                                    <div>
+                                        <div class="text-yellow-500 text-2xl mb-2 flex justify-center"><i
+                                                class="fa-solid fa-triangle-exclamation"></i></div>
+                                        <p class="font-bold text-gray-900 dark:text-white mb-2 text-center">Account
+                                            Unverified</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 mb-3 text-center">Your
+                                            account is currently limited. Verify your identity to unlock:</p>
+                                        <ul
+                                            class="space-y-2 text-xs text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                                            <li class="flex items-start gap-2">
+                                                <i class="fa-solid fa-ban text-red-400 mt-0.5"></i>
+                                                <span>Restricted transaction limits</span>
+                                            </li>
+                                            <li class="flex items-start gap-2">
+                                                <i class="fa-solid fa-eye-slash text-red-400 mt-0.5"></i>
+                                                <span>Lower visibility in search results</span>
+                                            </li>
+                                            <li class="flex items-start gap-2">
+                                                <i class="fa-solid fa-lock text-red-400 mt-0.5"></i>
+                                                <span>No access to premium deals</span>
+                                            </li>
+                                        </ul>
+                                        <a href="/settings?tab=verification"
+                                            class="block mt-3 text-center text-xs font-bold text-white bg-primary-600 hover:bg-primary-700 py-2 rounded-md transition-colors shadow-sm">
+                                            Complete Verification Now &rarr;
+                                        </a>
+                                    </div>
+                                </template>
+
+                                <!-- Arrow -->
+                                <div
+                                    class="absolute -top-2 left-6 w-4 h-4 bg-white dark:bg-gray-800 transform rotate-45 border-t border-l border-gray-100 dark:border-gray-700">
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </h1>
+                <template x-if="user.account_type === 'farmer'">
+                    <a href="/jobs/create"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-primary-700 bg-white dark:bg-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-800 focus:ring-white">
+                        <i class="fas fa-plus mr-2"></i> Post a Job
+                    </a>
+                </template>
+                <template x-if="user.account_type === 'realtor'">
+                    <a href="/marketplace/create"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-primary-700 bg-white dark:bg-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary-800 focus:ring-white">
+                        <i class="fas fa-plus mr-2"></i> List Property
+                    </a>
+                </template>
+            </div>
+        </header>
+    </div>
+
+    <main class="-mt-32 relative z-10">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="px-4 py-8 sm:px-0">
+
+                <!-- Realtor Dashboard -->
+                <template x-if="user.account_type === 'realtor'">
+                    <div class="space-y-8">
+                        <!-- Stats -->
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 bg-primary-500 rounded-md p-3">
+                                        <i class="fas fa-home text-white text-xl"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                                                Active Listings</dt>
+                                            <dd class="text-2xl font-semibold text-gray-900 dark:text-white"
+                                                x-text="listings.length"></dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Listings List -->
+                        <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                            <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">My Property
+                                    Listings</h3>
+                            </div>
+                            <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <template x-for="listing in listings" :key="listing.id">
+                                    <li
+                                        class="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center">
+                                                <div
+                                                    class="flex-shrink-0 h-12 w-12 rounded-md bg-gray-200 dark:bg-gray-600 overflow-hidden">
+                                                    <img :src="listing.image_url || 'https://via.placeholder.com/100'"
+                                                        class="h-full w-full object-cover">
+                                                </div>
+                                                <div class="ml-4">
+                                                    <div class="text-sm font-medium text-primary-600 truncate"
+                                                        x-text="listing.title"></div>
+                                                    <div class="text-sm text-gray-500 dark:text-gray-400"
+                                                        x-text="'₦' + listing.price"></div>
+                                                </div>
+                                            </div>
+                                            <div class="flex space-x-2">
+                                                <a :href="'/marketplace/' + listing.id"
+                                                    class="text-gray-400 hover:text-gray-500 dark:hover:text-gray-300">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a :href="'/marketplace/' + listing.id + '/edit'"
+                                                    class="text-blue-400 hover:text-blue-500">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </template>
+                                <li x-show="listings.length === 0"
+                                    class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    No properties listed yet.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Farmer Dashboard -->
+                <template x-if="user.account_type === 'farmer'">
+                    <div class="space-y-8">
+                        <!-- Stats / Quick Actions -->
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+                                        <i class="fas fa-users text-white text-xl"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                                                Hired Workers</dt>
+                                            <dd class="text-2xl font-semibold text-gray-900 dark:text-white"
+                                                x-text="contracts.length"></dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 bg-blue-500 rounded-md p-3">
+                                        <i class="fas fa-briefcase text-white text-xl"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                                                Active Jobs</dt>
+                                            <dd class="text-2xl font-semibold text-gray-900 dark:text-white"
+                                                x-text="jobs.length"></dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Add more stats if needed -->
+                        </div>
+
+                        <!-- Hired Workers Section -->
+                        <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                            <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Hired Workers
+                                </h3>
+                                <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Manage your active
+                                    contracts and workers.</p>
+                            </div>
+                            <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <template x-for="contract in contracts" :key="contract.id">
+                                    <li
+                                        class="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <div class="flex items-center justify-between">
+                                            <div class="text-sm font-medium text-primary-600 truncate"
+                                                x-text="contract.title"></div>
+                                            <div class="ml-2 flex-shrink-0 flex">
+                                                <span
+                                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                                    :class="{'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': contract.status === 'active', 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300': contract.status === 'pending', 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300': contract.status === 'draft'}"
+                                                    x-text="contract.status">
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 sm:flex sm:justify-between">
+                                            <div class="sm:flex">
+                                                <p class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                                    <i class="fas fa-user mr-1.5 text-gray-400"></i>
+                                                    Worker ID: <span x-text="contract.party_b_id"></span>
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
+                                                <i class="fas fa-calendar mr-1.5 text-gray-400"></i>
+                                                <p>Created on <span
+                                                        x-text="new Date(contract.created_at).toLocaleDateString()"></span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </template>
+                                <li x-show="contracts.length === 0"
+                                    class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    No hired workers yet. <a href="/workers-directory"
+                                        class="text-primary-600 hover:text-primary-500">Find workers</a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- My Job Listings Section -->
+                        <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                            <div
+                                class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                                <div>
+                                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">My Job
+                                        Listings</h3>
+                                    <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Jobs you have
+                                        posted.</p>
+                                </div>
+                                <a href="/jobs/create" class="text-sm text-primary-600 hover:text-primary-500">Post New
+                                    Job &rarr;</a>
+                            </div>
+                            <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                                <template x-for="job in jobs" :key="job.id">
+                                    <li
+                                        class="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <div class="flex items-center justify-between">
+                                            <div class="text-sm font-medium text-primary-600 truncate"
+                                                x-text="job.title"></div>
+                                            <div class="ml-2 flex-shrink-0 flex items-center space-x-2">
+                                                <span
+                                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                                                    x-text="job.status"></span>
+                                                <a :href="'/jobs/' + job.id + '/edit'"
+                                                    class="text-blue-400 hover:text-blue-500">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 sm:flex sm:justify-between">
+                                            <div class="sm:flex">
+                                                <p class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                                    <i class="fas fa-map-marker-alt mr-1.5 text-gray-400"></i>
+                                                    <span x-text="job.location"></span>
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
+                                                <p>Posted <span
+                                                        x-text="new Date(job.created_at).toLocaleDateString()"></span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </template>
+                                <li x-show="jobs.length === 0"
+                                    class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    You haven't posted any jobs yet.
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Worker Dashboard (Simplified for now) -->
+                <a href="/jobs" class="text-primary-600 hover:text-primary-500">Browse Jobs</a>
+            </div>
+        </div>
+</div>
+</template>
+
+<!-- Admin Dashboard (Keep existing) -->
+<template x-if="['admin', 'super_admin', 'moderator'].includes(user.account_type)">
+    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Admin Controls</h3>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <a href="/admin/users-page"
+                class="block p-6 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <h4 class="font-bold text-gray-900 dark:text-white">User Management</h4>
+            </a>
+            <a href="/admin/moderation-page"
+                class="block p-6 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                <h4 class="font-bold text-gray-900 dark:text-white">Moderation</h4>
+            </a>
+        </div>
+    </div>
+</template>
+
+</div>
+</div>
+</main>
+</div>
+</div>
+
+<script>
+    function dashboard() {
+        return {
+            user: JSON.parse(localStorage.getItem('flb_user') || '{}'),
+            contracts: [],
+            jobs: [],
+            listings: [],
+
+            async init() {
+                if (!localStorage.getItem('is_logged_in')) {
+                    window.location.href = '/login-page';
+                    return;
+                }
+
+                if (this.user.id) {
+                    await this.fetchContracts();
+                    if (this.user.account_type === 'farmer') {
+                        await this.fetchJobs();
+                    }
+                    if (this.user.account_type === 'realtor') {
+                        await this.fetchListings();
+                    }
+                }
+            },
+
+            async fetchContracts() {
+                try {
+                    const res = await fetch(`/api/my-contracts?user_id=${this.user.id}`);
+                    if (res.ok) {
+                        this.contracts = await res.json();
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            },
+
+            async fetchJobs() {
+                try {
+                    const res = await fetch(`/api/my-jobs?user_id=${this.user.id}`);
+                    if (res.ok) {
+                        this.jobs = await res.json();
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            },
+
+            async fetchListings() {
+                try {
+                    const res = await fetch(`/listings/user/${this.user.id}`);
+                    if (res.ok) {
+                        this.listings = await res.json();
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

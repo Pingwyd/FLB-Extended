@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-8" x-data="produceAssistant()">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white shadow sm:rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">AI Produce Assistant</h3>
+                <p class="mt-2 max-w-xl text-sm text-gray-500">Get shelf-life predictions and crop recommendations.</p>
+                
+                <div class="mt-5">
+                    <label for="tool-type" class="block text-sm font-medium text-gray-700">Select Tool</label>
+                    <select id="tool-type" x-model="selectedTool" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                        <option value="shelf-life">Shelf Life Predictor</option>
+                        <option value="crop-recommendation">Crop Recommendation</option>
+                    </select>
+                </div>
+
+                <!-- Shelf Life Form -->
+                <div x-show="selectedTool === 'shelf-life'" class="mt-6 space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Produce Type</label>
+                        <input type="text" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm" placeholder="e.g. Tomatoes">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Harvest Date</label>
+                        <input type="date" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    </div>
+                    <button class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Predict Shelf Life
+                    </button>
+                </div>
+
+                <!-- Crop Recommendation Form -->
+                <div x-show="selectedTool === 'crop-recommendation'" class="mt-6 space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Soil Type</label>
+                        <select class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                            <option>Loamy</option>
+                            <option>Sandy</option>
+                            <option>Clay</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Location/Region</label>
+                        <input type="text" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                    </div>
+                    <button class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                        Get Recommendations
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function produceAssistant() {
+        return {
+            selectedTool: 'shelf-life'
+        }
+    }
+</script>
+{% endblock %}

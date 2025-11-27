@@ -1,0 +1,484 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-8 transition-colors duration-200" x-data="profileSettings()">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="md:flex md:items-center md:justify-between mb-8">
+            <div class="flex-1 min-w-0">
+                <h2 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
+                    Account Settings
+                </h2>
+            </div>
+        </div>
+
+        <div class="lg:grid lg:grid-cols-12 lg:gap-x-8">
+            <!-- Sidebar -->
+            <aside class="py-6 px-2 sm:px-6 lg:py-0 lg:px-0 lg:col-span-3">
+                <nav class="space-y-1">
+                    <!-- Profile Tab -->
+                    <a href="#" @click.prevent="activeTab = 'profile'" 
+                       :class="{'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm': activeTab === 'profile', 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeTab !== 'profile'}" 
+                       class="group rounded-md px-3 py-2.5 flex items-center text-sm font-medium transition-all duration-200">
+                        <i class="fa-solid fa-user-circle mr-3 flex-shrink-0 h-5 w-5" 
+                           :class="{'text-primary-500': activeTab === 'profile', 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500': activeTab !== 'profile'}"></i>
+                        <span class="truncate">Profile</span>
+                    </a>
+
+                    <!-- Security Tab -->
+                    <a href="#" @click.prevent="activeTab = 'security'" 
+                       :class="{'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm': activeTab === 'security', 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeTab !== 'security'}" 
+                       class="group rounded-md px-3 py-2.5 flex items-center text-sm font-medium transition-all duration-200">
+                        <i class="fa-solid fa-shield-halved mr-3 flex-shrink-0 h-5 w-5" 
+                           :class="{'text-primary-500': activeTab === 'security', 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500': activeTab !== 'security'}"></i>
+                        <span class="truncate">Security</span>
+                    </a>
+
+                    <!-- Verification Tab -->
+                    <a href="#" @click.prevent="activeTab = 'verification'" 
+                       :class="{'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm': activeTab === 'verification', 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeTab !== 'verification'}" 
+                       class="group rounded-md px-3 py-2.5 flex items-center text-sm font-medium transition-all duration-200">
+                        <i class="fa-solid fa-id-card mr-3 flex-shrink-0 h-5 w-5" 
+                           :class="{'text-primary-500': activeTab === 'verification', 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500': activeTab !== 'verification'}"></i>
+                        <span class="truncate">Verification</span>
+                    </a>
+
+                    <!-- Worker Profile Tab (Only for Workers) -->
+                    <template x-if="user.account_type === 'worker'">
+                        <a href="#" @click.prevent="activeTab = 'worker_profile'" 
+                           :class="{'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm': activeTab === 'worker_profile', 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeTab !== 'worker_profile'}" 
+                           class="group rounded-md px-3 py-2.5 flex items-center text-sm font-medium transition-all duration-200">
+                            <i class="fa-solid fa-briefcase mr-3 flex-shrink-0 h-5 w-5" 
+                               :class="{'text-primary-500': activeTab === 'worker_profile', 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500': activeTab !== 'worker_profile'}"></i>
+                            <span class="truncate">Worker Profile</span>
+                        </a>
+                    </template>
+
+                    <!-- Appearance Tab -->
+                    <a href="#" @click.prevent="activeTab = 'appearance'" 
+                       :class="{'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm': activeTab === 'appearance', 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeTab !== 'appearance'}" 
+                       class="group rounded-md px-3 py-2.5 flex items-center text-sm font-medium transition-all duration-200">
+                        <i class="fa-solid fa-paint-roller mr-3 flex-shrink-0 h-5 w-5" 
+                           :class="{'text-primary-500': activeTab === 'appearance', 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500': activeTab !== 'appearance'}"></i>
+                        <span class="truncate">Appearance</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Content Area -->
+            <div class="space-y-6 sm:px-6 lg:px-0 lg:col-span-9">
+                
+                <!-- Profile Tab Content -->
+                <div x-show="activeTab === 'profile'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                    <div class="p-6 space-y-6">
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Profile Information</h3>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Update your personal details and public profile.</p>
+                        </div>
+
+                        <!-- Profile Picture -->
+                        <div class="flex items-center space-x-6">
+                            <div class="relative">
+                                <img :src="user.profile_picture || 'https://ui-avatars.com/api/?name=' + (user.full_name || 'User') + '&background=random'" 
+                                     alt="Profile" 
+                                     class="h-24 w-24 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-md">
+                                <label for="photo-upload" class="absolute bottom-0 right-0 bg-primary-600 hover:bg-primary-700 text-white rounded-full p-2 cursor-pointer shadow-sm transition-colors">
+                                    <i class="fa-solid fa-camera text-xs"></i>
+                                    <input id="photo-upload" type="file" class="sr-only" accept="image/*" @change="handleImageUpload">
+                                </label>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-medium text-gray-900 dark:text-white">Profile Photo</h4>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">JPG, GIF or PNG. Max size of 2MB.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                            <div class="sm:col-span-3">
+                                <label for="full_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Full Name</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fa-solid fa-user text-gray-400 sm:text-sm"></i>
+                                    </div>
+                                    <input type="text" name="full_name" id="full_name" x-model="user.full_name" 
+                                           class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-16 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-2" style="padding-left: 3.5rem;">
+                                </div>
+                            </div>
+
+                            <div class="sm:col-span-3">
+                                <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email address</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fa-solid fa-envelope text-gray-400 sm:text-sm"></i>
+                                    </div>
+                                    <input type="email" name="email" id="email" x-model="user.email" disabled 
+                                           class="block w-full pl-16 sm:text-sm border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 text-gray-500 dark:text-gray-400 rounded-md py-2 cursor-not-allowed" style="padding-left: 3.5rem;">
+                                </div>
+                            </div>
+
+                            <div class="sm:col-span-3">
+                                <label for="phone_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fa-solid fa-phone text-gray-400 sm:text-sm"></i>
+                                    </div>
+                                    <input type="text" name="phone_number" id="phone_number" x-model="user.phone_number" 
+                                           class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-16 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-2" style="padding-left: 3.5rem;">
+                                </div>
+                            </div>
+
+                            <div class="sm:col-span-3">
+                                <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Location</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <i class="fa-solid fa-map-marker-alt text-gray-400 sm:text-sm"></i>
+                                    </div>
+                                    <input type="text" name="location" id="location" x-model="user.location" placeholder="City, State"
+                                           class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-16 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-2" style="padding-left: 3.5rem;">
+                                </div>
+                            </div>
+
+                            <div class="sm:col-span-6">
+                                <label for="bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Bio</label>
+                                <div class="mt-1">
+                                    <textarea id="bio" name="bio" rows="3" x-model="user.bio" 
+                                              class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2" 
+                                              placeholder="Tell us a little about yourself..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 text-right border-t border-gray-200 dark:border-gray-700">
+                        <button type="button" @click="saveProfile" 
+                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                            <i class="fa-solid fa-save mr-2"></i> Save Changes
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Security Tab Content -->
+                <div x-show="activeTab === 'security'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                    <div class="p-6 space-y-6">
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Security Settings</h3>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage your password and account security.</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                            <div class="sm:col-span-4">
+                                <label for="current_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Password</label>
+                                <input type="password" name="current_password" id="current_password" 
+                                       class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-2 px-3">
+                            </div>
+                            <div class="sm:col-span-4">
+                                <label for="new_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">New Password</label>
+                                <input type="password" name="new_password" id="new_password" 
+                                       class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-2 px-3">
+                            </div>
+                            <div class="sm:col-span-4">
+                                <label for="confirm_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm New Password</label>
+                                <input type="password" name="confirm_password" id="confirm_password" 
+                                       class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-2 px-3">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 text-right border-t border-gray-200 dark:border-gray-700">
+                        <button type="button" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                            Update Password
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Verification Tab Content -->
+                <div x-show="activeTab === 'verification'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                    <div class="p-6 space-y-6">
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Identity Verification</h3>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Upload documents to verify your identity and increase trust.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                            <div class="sm:col-span-4">
+                                <label for="document_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Document Type</label>
+                                <select id="document_type" name="document_type" x-model="verification.type" 
+                                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                                    <option value="">Select a document type</option>
+                                    <option value="NIN">National Identity Number (NIN)</option>
+                                    <option value="passport">International Passport</option>
+                                    <option value="drivers_license">Driver's License</option>
+                                    <option value="voters_card">Voter's Card</option>
+                                </select>
+                            </div>
+
+                            <div class="sm:col-span-4">
+                                <label for="document_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Document Number</label>
+                                <input type="text" name="document_number" id="document_number" x-model="verification.number" 
+                                       class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-2 px-3">
+                            </div>
+
+                            <div class="sm:col-span-6">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Upload Document Image</label>
+                                <div class="mt-2 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-gray-600 border-dashed rounded-md hover:border-primary-500 dark:hover:border-primary-500 transition-colors">
+                                    <div class="space-y-1 text-center">
+                                        <i class="fa-solid fa-cloud-arrow-up text-gray-400 text-4xl mb-3"></i>
+                                        <div class="flex text-sm text-gray-600 dark:text-gray-400">
+                                            <label for="file-upload" class="relative cursor-pointer bg-white dark:bg-gray-800 rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
+                                                <span>Upload a file</span>
+                                                <input id="file-upload" name="file-upload" type="file" class="sr-only" @change="handleDocUpload">
+                                            </label>
+                                            <p class="pl-1">or drag and drop</p>
+                                        </div>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">PNG, JPG, PDF up to 10MB</p>
+                                        <p x-show="verification.fileName" x-text="verification.fileName" class="text-sm text-primary-600 mt-2 font-medium"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 text-right border-t border-gray-200 dark:border-gray-700">
+                        <button type="button" @click="submitVerification" 
+                                class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                            Submit for Verification
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Appearance Tab Content -->
+                <div x-show="activeTab === 'appearance'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                    <div class="p-6 space-y-6">
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Appearance Settings</h3>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Customize how FLB Extended looks for you.</p>
+                        </div>
+
+                        <div class="flex items-center justify-between py-4">
+                            <div class="flex flex-col">
+                                <span class="text-sm font-medium text-gray-900 dark:text-white" id="dark-mode-label">Dark Mode</span>
+                                <span class="text-sm text-gray-500 dark:text-gray-400">Adjust the appearance to reduce eye strain.</span>
+                            </div>
+                            <button type="button" @click="toggleDarkMode" 
+                                    :class="darkMode ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-600'" 
+                                    class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500" 
+                                    aria-pressed="false" aria-labelledby="dark-mode-label">
+                                <span class="sr-only">Use setting</span>
+                                <span aria-hidden="true" 
+                                      :class="darkMode ? 'translate-x-5' : 'translate-x-0'" 
+                                      class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200">
+                                    <span class="absolute inset-0 h-full w-full flex items-center justify-center transition-opacity" 
+                                          :class="darkMode ? 'opacity-0 ease-out duration-100' : 'opacity-100 ease-in duration-200'" 
+                                          aria-hidden="true">
+                                        <i class="fa-solid fa-sun text-yellow-500 text-[10px]"></i>
+                                    </span>
+                                    <span class="absolute inset-0 h-full w-full flex items-center justify-center transition-opacity" 
+                                          :class="darkMode ? 'opacity-100 ease-in duration-200' : 'opacity-0 ease-out duration-100'" 
+                                          aria-hidden="true">
+                                        <i class="fa-solid fa-moon text-primary-600 text-[10px]"></i>
+                                    </span>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Worker Profile Tab (Reused from previous, styled) -->
+                <div x-show="activeTab === 'worker_profile'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                    <div class="p-6 space-y-6">
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
+                            <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Worker Profile</h3>
+                            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage your public worker profile, skills, and availability.</p>
+                        </div>
+
+                        <div class="grid grid-cols-6 gap-6">
+                            <!-- Availability Status -->
+                            <div class="col-span-6 sm:col-span-4">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Availability Status</label>
+                                <div class="mt-2 flex items-center">
+                                    <button type="button" @click="workerProfile.isAvailable = !workerProfile.isAvailable" 
+                                            :class="workerProfile.isAvailable ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-600'" 
+                                            class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                        <span class="sr-only">Use setting</span>
+                                        <span aria-hidden="true" :class="workerProfile.isAvailable ? 'translate-x-5' : 'translate-x-0'" class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200"></span>
+                                    </button>
+                                    <span class="ml-3 text-sm font-medium" :class="workerProfile.isAvailable ? 'text-green-700 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'" x-text="workerProfile.isAvailable ? 'Available for Hire' : 'Not Available'"></span>
+                                </div>
+                            </div>
+
+                            <!-- Daily Rate -->
+                            <div class="col-span-6 sm:col-span-3">
+                                <label for="daily_rate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Daily Rate (₦)</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">₦</span>
+                                    </div>
+                                    <input type="number" name="daily_rate" id="daily_rate" x-model="workerProfile.dailyRate" 
+                                           class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-2" placeholder="0.00">
+                                </div>
+                            </div>
+
+                            <!-- Bio -->
+                            <div class="col-span-6">
+                                <label for="worker_bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Bio / Experience</label>
+                                <div class="mt-1">
+                                    <textarea id="worker_bio" name="worker_bio" rows="3" x-model="workerProfile.bio" 
+                                              class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md p-2" placeholder="Describe your experience..."></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Skills -->
+                            <div class="col-span-6">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Skills</label>
+                                <div class="mt-2 flex flex-wrap gap-2 mb-2">
+                                    <template x-for="(skill, index) in workerProfile.skills" :key="index">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                            <span x-text="skill"></span>
+                                            <button type="button" @click="removeSkill(index)" class="flex-shrink-0 ml-1.5 h-4 w-4 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:bg-blue-500 focus:text-white">
+                                                <span class="sr-only">Remove skill</span>
+                                                <i class="fa-solid fa-times text-xs"></i>
+                                            </button>
+                                        </span>
+                                    </template>
+                                </div>
+                                <div class="flex rounded-md shadow-sm">
+                                    <input type="text" x-model="newSkill" @keydown.enter.prevent="addSkill" 
+                                           class="focus:ring-primary-500 focus:border-primary-500 flex-1 block w-full rounded-none rounded-l-md sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white py-2 px-3" placeholder="Add a skill">
+                                    <button type="button" @click="addSkill" class="-ml-px relative inline-flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-r-md text-gray-700 dark:text-gray-200 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500">
+                                        Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 text-right border-t border-gray-200 dark:border-gray-700">
+                        <button type="button" class="bg-primary-600 border border-transparent rounded-md shadow-sm py-2 px-4 inline-flex justify-center text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                            Save Worker Profile
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function profileSettings() {
+        const user = JSON.parse(localStorage.getItem('flb_user') || '{}');
+        const themeKey = user.id ? `theme_${user.id}` : 'theme';
+
+        return {
+            activeTab: 'profile',
+            user: user,
+            themeKey: themeKey,
+            darkMode: localStorage.getItem(themeKey) === 'dark' || (!localStorage.getItem(themeKey) && window.matchMedia('(prefers-color-scheme: dark)').matches),
+            verification: {
+                type: '',
+                number: '',
+                fileName: ''
+            },
+            workerProfile: {
+                isAvailable: true,
+                dailyRate: '',
+                bio: '',
+                skills: ['Harvesting', 'Planting']
+            },
+            newSkill: '',
+
+            init() {
+                // Check URL params for active tab
+                const urlParams = new URLSearchParams(window.location.search);
+                const tab = urlParams.get('tab');
+                if (tab && ['profile', 'security', 'verification', 'appearance', 'worker_profile'].includes(tab)) {
+                    this.activeTab = tab;
+                }
+
+                // Apply theme on load
+                if (this.darkMode) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+                
+                // Fetch latest user data
+                if (this.user.id) {
+                    // In a real app, fetch from API
+                    // fetch('/users/' + this.user.id).then(...)
+                }
+            },
+
+            toggleDarkMode() {
+                this.darkMode = !this.darkMode;
+                if (this.darkMode) {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem(this.themeKey, 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem(this.themeKey, 'light');
+                }
+            },
+
+            handleImageUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.user.profile_picture = e.target.result;
+                    // Removed auto-save. User must click "Save Changes"
+                };
+                reader.readAsDataURL(file);
+            },
+
+            handleDocUpload(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    this.verification.fileName = file.name;
+                }
+            },
+
+            async saveProfile() {
+                try {
+                    const response = await fetch(`/users/${this.user.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(this.user)
+                    });
+
+                    if (response.ok) {
+                        const updatedUser = await response.json();
+                        this.user = updatedUser;
+                        localStorage.setItem('flb_user', JSON.stringify(updatedUser));
+                        
+                        // Dispatch event to update header and other components
+                        window.dispatchEvent(new CustomEvent('user-updated', { detail: updatedUser }));
+                        
+                        alert('Profile updated successfully!');
+                    } else {
+                        alert('Failed to update profile.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred.');
+                }
+            },
+
+            submitVerification() {
+                alert('Verification documents submitted successfully! We will review them shortly.');
+                this.verification = { type: '', number: '', fileName: '' };
+            },
+
+            addSkill() {
+                if (this.newSkill.trim() !== '') {
+                    this.workerProfile.skills.push(this.newSkill.trim());
+                    this.newSkill = '';
+                }
+            },
+
+            removeSkill(index) {
+                this.workerProfile.skills.splice(index, 1);
+            }
+        }
+    }
+</script>
+{% endblock %}

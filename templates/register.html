@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Register - FLB Extended{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex bg-white dark:bg-gray-900">
+    <!-- Left Side - Visual -->
+    <div class="hidden lg:block relative w-0 flex-1">
+        <img class="absolute inset-0 h-full w-full object-cover"
+            src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80"
+            alt="Agriculture growth">
+        <div class="absolute inset-0 bg-green-900 bg-opacity-40 flex items-center justify-center">
+            <div class="text-white text-center px-8">
+                <h2 class="text-4xl font-bold mb-4">Join the Revolution</h2>
+                <p class="text-xl">Start your journey with FLB Extended today.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side - Form -->
+    <div
+        class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-gray-50 dark:bg-gray-900">
+        <div class="mx-auto w-full max-w-sm lg:w-96 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl">
+            <div>
+                <h2 class="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">Create your account</h2>
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    Already have an account?
+                    <a href="/login-page" class="font-medium text-green-600 hover:text-green-500">
+                        Sign in
+                    </a>
+                </p>
+            </div>
+
+            <div class="mt-8">
+                <div class="mt-6">
+                    <form id="registerForm" class="space-y-6">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Full Name
+                            </label>
+                            <div class="mt-1 relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-user text-gray-400"></i>
+                                </div>
+                                <input id="name" name="name" type="text" required
+                                    class="focus:ring-green-500 focus:border-green-500 block w-full pl-16 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-3"
+                                    style="padding-left: 3.5rem;" placeholder="John Doe">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="email-address"
+                                class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Email address
+                            </label>
+                            <div class="mt-1 relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-envelope text-gray-400"></i>
+                                </div>
+                                <input id="email-address" name="email" type="email" autocomplete="email" required
+                                    class="focus:ring-green-500 focus:border-green-500 block w-full pl-16 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-3"
+                                    style="padding-left: 3.5rem;" placeholder="you@example.com">
+                            </div>
+                        </div>
+
+                        <div x-data="{ showPassword: false }">
+                            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Password
+                            </label>
+                            <div class="mt-1 relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input id="password" name="password" :type="showPassword ? 'text' : 'password'"
+                                    autocomplete="new-password" required
+                                    class="focus:ring-green-500 focus:border-green-500 block w-full pl-16 pr-10 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-3"
+                                    style="padding-left: 3.5rem;" placeholder="••••••••">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <button type="button" @click="showPassword = !showPassword"
+                                        class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                                        <i class="fas" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300">I am
+                                a...</label>
+                            <div class="mt-1 relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-user-tag text-gray-400"></i>
+                                </div>
+                                <select id="role" name="role" required
+                                    class="focus:ring-green-500 focus:border-green-500 block w-full pl-16 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-3"
+                                    style="padding-left: 3.5rem;">
+                                    <option value="" disabled selected>Select your role</option>
+                                    <option value="farmer">Farmer</option>
+                                    <option value="worker">Worker</option>
+                                    <option value="realtor">Realtor</option>
+                                    <option value="buyer">Buyer</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <button type="submit"
+                                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                Register
+                            </button>
+                        </div>
+
+                        <!-- Error/Success Message Container -->
+                        <div id="message-container" class="hidden mt-4 px-4 py-3 rounded relative" role="alert">
+                            <span class="block sm:inline" id="message-text"></span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('registerForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email-address').value;
+        const password = document.getElementById('password').value;
+        const role = document.getElementById('role').value;
+
+        const messageDiv = document.getElementById('message-container');
+        const messageText = document.getElementById('message-text');
+
+        try {
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    full_name: name,
+                    email: email,
+                    password: password,
+                    account_type: role
+                }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                messageDiv.className = 'mt-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative';
+                messageText.textContent = 'Registration successful! Redirecting to login...';
+                messageDiv.classList.remove('hidden');
+
+                setTimeout(() => {
+                    window.location.href = '/login-page';
+                }, 2000);
+            } else {
+                messageDiv.className = 'mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative';
+                messageText.textContent = data.error || data.message || 'Registration failed.';
+                messageDiv.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            messageDiv.className = 'mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative';
+            messageText.textContent = 'An unexpected error occurred.';
+            messageDiv.classList.remove('hidden');
+        }
+    });
+</script>
+{% endblock %}

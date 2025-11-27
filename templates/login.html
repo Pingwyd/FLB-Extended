@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Login - FLB Extended{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex bg-white dark:bg-gray-900">
+    <!-- Left Side - Visual -->
+    <div class="hidden lg:block relative w-0 flex-1">
+        <img class="absolute inset-0 h-full w-full object-cover" src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80" alt="Farm landscape">
+        <div class="absolute inset-0 bg-green-900 bg-opacity-40 flex items-center justify-center">
+            <div class="text-white text-center px-8">
+                <h2 class="text-4xl font-bold mb-4">Welcome Back</h2>
+                <p class="text-xl">Connect with the agricultural community and grow your business.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side - Form -->
+    <div class="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-gray-50 dark:bg-gray-900">
+        <div class="mx-auto w-full max-w-sm lg:w-96 bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-xl">
+            <div class="text-center">
+                <h2 class="mt-2 text-3xl font-extrabold text-gray-900 dark:text-white">Sign in</h2>
+                <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    Or
+                    <a href="/register-page" class="font-medium text-green-600 hover:text-green-500 transition-colors">
+                        create a new account
+                    </a>
+                </p>
+            </div>
+
+            <div class="mt-8">
+                <div class="mt-6">
+                    <form id="loginForm" class="space-y-6">
+                        <div>
+                            <label for="email-address" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Email address
+                            </label>
+                            <div class="mt-1 relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-envelope text-gray-400"></i>
+                                </div>
+                                <input id="email-address" name="email" type="email" autocomplete="email" required class="focus:ring-green-500 focus:border-green-500 block w-full pl-16 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-3" style="padding-left: 3.5rem;" placeholder="you@example.com">
+                            </div>
+                        </div>
+
+                        <div x-data="{ showPassword: false }">
+                            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Password
+                            </label>
+                            <div class="mt-1 relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input id="password" name="password" :type="showPassword ? 'text' : 'password'" autocomplete="current-password" required class="focus:ring-green-500 focus:border-green-500 block w-full pl-16 pr-10 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-3" style="padding-left: 3.5rem;" placeholder="••••••••">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                                    <button type="button" @click="showPassword = !showPassword" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                                        <i class="fas" :class="showPassword ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded cursor-pointer">
+                                <label for="remember-me" class="ml-2 block text-sm text-gray-900 dark:text-gray-300 cursor-pointer">
+                                    Remember me
+                                </label>
+                            </div>
+
+                            <div class="text-sm">
+                                <a href="#" class="font-medium text-green-600 hover:text-green-500 transition-colors">
+                                    Forgot password?
+                                </a>
+                            </div>
+                        </div>
+
+                        <div>
+                            <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transform transition hover:-translate-y-0.5">
+                                Sign in
+                            </button>
+                        </div>
+
+                        <!-- Error Message Container -->
+                        <div id="error-message" class="hidden mt-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                            <span class="block sm:inline" id="error-text"></span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('email-address').value;
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('error-message');
+        const errorText = document.getElementById('error-text');
+
+        try {
+            const response = await fetch('/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Store token (if your API returns one, otherwise rely on session cookie)
+                if (data.access_token) {
+                    localStorage.setItem('access_token', data.access_token);
+                }
+                
+                // Store user info for UI updates
+                localStorage.setItem('flb_user', JSON.stringify(data));
+                localStorage.setItem('user_email', email);
+                localStorage.setItem('is_logged_in', 'true');
+                
+                // Redirect to Dashboard instead of Home
+                window.location.href = '/dashboard';
+            } else {
+                errorText.textContent = data.message || 'Login failed. Please check your credentials.';
+                errorDiv.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            errorText.textContent = 'An unexpected error occurred.';
+            errorDiv.classList.remove('hidden');
+        }
+    });
+</script>
+{% endblock %}

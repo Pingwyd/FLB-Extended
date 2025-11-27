@@ -1,0 +1,149 @@
+CONNECT Farmers or Farm owners (Both New and Old -- But predominantly NEW FARMERS / FARM OWNERS) to :
+
+1. Workers -  Laborer's , specialist , Fumigation , Fertilizer supplier
+
+2. Real estate  -  Open Land owners, Farm owners --to let out to other people 
+		3d models for how the farm looks like can be implemented, so the customer doesn't have to go to the site immediately , or if they don't have the time for it 
+
+3. Produce Assistant :- 
+- Farm produce calculator : Calculate the final cost of each produce after considering several factors -- Season , Size of harvest , number of workers, profit margins , other expenses - fertilizer, water , light 
+
+- Shelf Life calculator (After transport - As produce staying in a hot place for a long time can reduce shelf life - so to avoid waste it can be calculated so as to give the farmers and the marketers an idea or approximation of when the produce will spoil or start spoiling )
+
+- Ai Assistant - To help new or upcoming farmers to decide what to plant or start planting or invest their time into based , where they live , what aspect of farming the want to go into , their size of land , their labor force , and their funding 
+
+4. Other Farmers -  To get advice on what to do and what to plant - using the reddit style approach
+
+----------------------------------------------------------------
+Verification system for anyone that is onboarded onto the platform:
+- NIN
+- Passport
+- Drivers License 
+
+OTP (Email, phone number --WhatsApp or telegram integration too , to confirm they are a person - other means will also be put into place -- Adoption of Cloudflare human checker 
+
+----------------------------------------------------------------
+
+Types of Accounts 
+1. Farmer/ Farm Owner
+2. Realtor 
+3. Worker
+
+4.  Admin - Has rights or access to other accounts -- Can ban accounts if needed, review appeals of banned accounts , review personnel that have been onboarded to confirm if they are real or can cause a problem in the eco system 
+
+----------------------------------------------------------------
+
+Messaging system Between the Farm Owner and realtors, or workers
+
+Messages can be used for chatting amongst Users
+
+Can be used for finalizing working pay or Land payments ,etc.
+
+Before any Payment is done , the two parties will sign a contract that legally binds them to do their work appropriately and the amount agreed upon must be payed in full to the other party , any breach in contract will cause a significant fine to be placed upon the party
+
+----------------------------------------------------------------
+
+Rating System for Both Farmers/Farm owners, Realtors , Workers
+
+----------------------------------------------------------------
+
+Reporting System , where any of the user Accounts, aside from the admin can be reported to the admin for misconduct or any other unacceptable behavior 
+
+----------------------------------------------------------------
+
+A legally binding contract so as to avoid any dispute , as anyone who breaks the contract will be susceptible to being banned of the platform and heavily fined
+
+Legal Team :
+
+- A Legal team will be needed to handle what the contracts will look like for the app, just like a general overview
+
+- And to go on with suing or seeking legal action or repraments incase of breach of contract
+
+- To Sue incase of misconduct , depending on the level of misconduct from said persons
+
+----------------------------------------------------------------
+
+Payment Solution -- Using Interswitch as a means of payment to the workers or realtors :
+A virtual wallet is created so as to hold funds 
+
+- For the Farmer / Farm Owners : To be able to hold money in the app and pay as needed
+- For the Workers : To hold money that is paid to them and withdraw to their bank accounts as needed 
+- For the Realtors : To hold money that is paid to them and withdraw to their bank accounts as needed 
+
+Later Expansions: 
+A card can be an option , so that money doesn't need to be transferred out of the virtual account , instead the card can be used to pay for things 
+
+
+----------------------------------------------------------------
+
+Terms Of Service
+
+----------------------------------------------------------------
+
+Business Model :
+
+Fee for Visibility amongst Farmers/Farm Owners for better likelihood to be employed
+Fee for each transaction after a successful payment
+Fee for every successfully employed personnel 
+Fee for withdrawal 
+
+Premium Features - more access to Produce Assistant
+
+----------------------------------------------------------------
+
+Data Privacy 
+
+Passwords aren't stored in plain text, but rather in their has values , so as to minimize risk of gaining access to accounts in the case of a database breach 
+
+DOM protection 
+Cross site Scripting Protection 
+Password policy integration 
+Input Filtering/ Validation - to Avoid Sql Injections 
+
+Messages are stored plainly in the database -- Can be reworked later if needed 
+
+Secure Storage of Credit Card details 
+
+----------------------------------------------------------------
+
+Admin Privilege Levels (Principle of Least Privilege):
+
+1. MODERATOR (Content Management):
+   - Delete/hide marketplace listings (Real Estate & Workers)
+   - Review and act on reported content
+   - Mark listings as fraudulent/spam
+   - View user reports and flagged content
+   - CANNOT ban users
+   - CANNOT access payment/wallet data
+   - CANNOT modify user accounts
+   - CANNOT manage other moderators/admins
+   Authentication: Email + Password
+
+2. ADMIN (User Management):
+   - Ban/unban users
+   - Review ban appeals
+   - Approve/reject verification documents (NIN, Passport, etc.)
+   - View user activity logs
+   - Manage user account status
+   - CANNOT delete listings (must report to moderators)
+   - CANNOT delete other admins
+   - CANNOT access financial transaction details
+   - CANNOT modify system configuration
+   Authentication: Email + Password + OTP (SMS/Email)
+
+3. SUPER ADMIN (Full System Access):
+   - All moderator privileges
+   - All admin privileges
+   - Create/delete moderators and admins
+   - Access financial reports and transaction logs
+   - System configuration and settings
+   - Database management
+   - Audit log access
+   - Emergency system controls
+   Authentication: Email + Password + OTP + IP Whitelist + Security Questions
+
+Audit Logging:
+- All admin actions logged with timestamp, IP, and admin ID
+- Deletion actions require reason/notes
+- Ban actions require evidence and reason
+- All logs immutable and accessible only to Super Admin
