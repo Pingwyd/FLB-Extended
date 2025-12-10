@@ -1,54 +1,102 @@
-{% extends "base.html" %}
+{% extends "admin_base.html" %}
+
+{% block title %}System Settings - Admin{% endblock %}
+{% block header_title %}System Settings{% endblock %}
 
 {% block content %}
-<div class="bg-gray-50 min-h-screen py-8" x-data="adminSettings()">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-2xl font-bold text-gray-900 mb-6">System Settings</h1>
-        
-        <div class="bg-white shadow overflow-hidden sm:rounded-lg">
-            <div class="px-4 py-5 sm:p-6 space-y-6">
-                <div>
-                    <h3 class="text-lg leading-6 font-medium text-gray-900">General Configuration</h3>
-                    <p class="mt-1 text-sm text-gray-500">Manage global application settings.</p>
+<div x-data="settingsApp()">
+    <div class="bg-gray-800 shadow overflow-hidden sm:rounded-lg border border-gray-700">
+        <div class="px-4 py-5 sm:px-6 border-b border-gray-700">
+            <h3 class="text-lg leading-6 font-medium text-white">Platform Configuration</h3>
+            <p class="mt-1 max-w-2xl text-sm text-gray-400">Manage global system settings.</p>
+        </div>
+        <div class="border-t border-gray-700 px-4 py-5 sm:p-0">
+            <dl class="sm:divide-y sm:divide-gray-700">
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-400">Platform Fee (%)</dt>
+                    <dd class="mt-1 text-sm text-white sm:mt-0 sm:col-span-2 flex items-center">
+                        <input type="number" x-model="settings.platform_fee" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-600 bg-gray-700 text-white rounded-md max-w-xs mr-4">
+                        <button @click="updateSetting('platform_fee')" class="text-primary-500 hover:text-primary-400">Save</button>
+                    </dd>
                 </div>
-
-                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
-                    <div class="sm:col-span-3">
-                        <label for="platform_fee" class="block text-sm font-medium text-gray-700">Platform Fee (%)</label>
-                        <div class="mt-1">
-                            <input type="number" name="platform_fee" id="platform_fee" x-model="settings.platformFee" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
-                        </div>
-                    </div>
-
-                    <div class="sm:col-span-3">
-                        <label for="maintenance_mode" class="block text-sm font-medium text-gray-700">Maintenance Mode</label>
-                        <div class="mt-1">
-                            <select id="maintenance_mode" name="maintenance_mode" x-model="settings.maintenanceMode" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md">
-                                <option value="false">Disabled</option>
-                                <option value="true">Enabled</option>
-                            </select>
-                        </div>
-                    </div>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-400">Maintenance Mode</dt>
+                    <dd class="mt-1 text-sm text-white sm:mt-0 sm:col-span-2 flex items-center">
+                        <button type="button" 
+                                @click="toggleMaintenance()"
+                                :class="settings.maintenance_mode ? 'bg-primary-600' : 'bg-gray-600'"
+                                class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500" 
+                                role="switch" 
+                                aria-checked="false">
+                            <span class="sr-only">Use setting</span>
+                            <span aria-hidden="true" 
+                                  :class="settings.maintenance_mode ? 'translate-x-5' : 'translate-x-0'"
+                                  class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200"></span>
+                        </button>
+                        <span class="ml-3 text-sm text-gray-400" x-text="settings.maintenance_mode ? 'Enabled' : 'Disabled'"></span>
+                    </dd>
                 </div>
-
-                <div class="flex justify-end">
-                    <button type="button" class="bg-primary-600 border border-transparent rounded-md shadow-sm py-2 px-4 inline-flex justify-center text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                        Save Settings
-                    </button>
+                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-gray-400">Allow New Registrations</dt>
+                    <dd class="mt-1 text-sm text-white sm:mt-0 sm:col-span-2 flex items-center">
+                        <button type="button" 
+                                @click="toggleRegistrations()"
+                                :class="settings.allow_registrations ? 'bg-primary-600' : 'bg-gray-600'"
+                                class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500" 
+                                role="switch" 
+                                aria-checked="false">
+                            <span class="sr-only">Use setting</span>
+                            <span aria-hidden="true" 
+                                  :class="settings.allow_registrations ? 'translate-x-5' : 'translate-x-0'"
+                                  class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200"></span>
+                        </button>
+                        <span class="ml-3 text-sm text-gray-400" x-text="settings.allow_registrations ? 'Allowed' : 'Paused'"></span>
+                    </dd>
                 </div>
-            </div>
+            </dl>
         </div>
     </div>
 </div>
 
 <script>
-    function adminSettings() {
-        return {
-            settings: {
-                platformFee: 5.0,
-                maintenanceMode: 'false'
+function settingsApp() {
+    return {
+        settings: {
+            platform_fee: 5,
+            maintenance_mode: false,
+            allow_registrations: true
+        },
+        currentUser: JSON.parse(localStorage.getItem('flb_user') || '{}'),
+
+        init() {
+            if (!['admin', 'super_admin'].includes(this.currentUser.account_type)) {
+                window.location.href = '/dashboard';
+                return;
             }
+            this.fetchSettings();
+        },
+
+        async fetchSettings() {
+            // Mock fetch - replace with actual API call
+            console.log('Fetching settings...');
+        },
+
+        async updateSetting(key) {
+            // Mock update - replace with actual API call
+            console.log(`Updating ${key} to ${this.settings[key]}`);
+            alert('Setting updated successfully');
+        },
+
+        async toggleMaintenance() {
+            this.settings.maintenance_mode = !this.settings.maintenance_mode;
+            this.updateSetting('maintenance_mode');
+        },
+
+        async toggleRegistrations() {
+            this.settings.allow_registrations = !this.settings.allow_registrations;
+            this.updateSetting('allow_registrations');
         }
     }
+}
 </script>
 {% endblock %}

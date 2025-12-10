@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-8" x-data="reviewsPage()">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">My Reviews</h1>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">See what others are saying about your work.</p>
+            </div>
+            <a href="/dashboard" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg border border-gray-200 dark:border-gray-700">
+            <div x-show="loading" class="p-10 flex justify-center">
+                <i class="fas fa-circle-notch fa-spin text-4xl text-purple-600"></i>
+            </div>
+
+            <div x-show="!loading && reviews.length === 0" class="p-10 text-center">
+                <i class="fas fa-star text-4xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                <p class="text-gray-500 dark:text-gray-400">No reviews yet.</p>
+            </div>
+
+            <ul x-show="!loading && reviews.length > 0" class="divide-y divide-gray-200 dark:divide-gray-700">
+                <template x-for="review in reviews" :key="review.id">
+                    <li class="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition duration-150 ease-in-out">
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0">
+                                <div class="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center text-purple-600 dark:text-purple-300 font-bold border border-purple-200 dark:border-purple-700">
+                                    <span x-text="review.rater_name ? review.rater_name.charAt(0) : '?'"></span>
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate" x-text="review.rater_name || 'Anonymous'"></p>
+                                    <div class="flex items-center">
+                                        <template x-for="i in 5">
+                                            <i class="fas fa-star text-xs" :class="i <= review.rating_value ? 'text-yellow-400' : 'text-gray-300 dark:text-gray-600'"></i>
+                                        </template>
+                                    </div>
+                                </div>
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400" x-text="review.comment || 'No comment provided.'"></p>
+                                <p class="mt-2 text-xs text-gray-400 dark:text-gray-500" x-text="new Date(review.created_at).toLocaleDateString()"></p>
+                            </div>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    function reviewsPage() {
+        return {
+            reviews: [],
+            loading: true,
+            user: JSON.parse(localStorage.getItem('flb_user') || '{}'),
+
+            async init() {
+                if (!this.user.id) {
+                    window.location.href = '/login-page';
+                    return;
+                }
+                await this.fetchReviews();
+            },
+
+            async fetchReviews() {
+                this.loading = true;
+                try {
+                    const res = await fetch(`/api/my-reviews?user_id=${this.user.id}`);
+                    if (res.ok) {
+                        this.reviews = await res.json();
+                    } else {
+                        console.error('Failed to fetch reviews');
+                    }
+                } catch (e) {
+                    console.error('Error:', e);
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

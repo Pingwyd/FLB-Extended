@@ -43,6 +43,15 @@
                         <span class="truncate">Verification</span>
                     </a>
 
+                    <!-- Payment Tab -->
+                    <a href="#" @click.prevent="activeTab = 'payment'" 
+                       :class="{'bg-white dark:bg-gray-800 text-primary-600 dark:text-primary-400 shadow-sm': activeTab === 'payment', 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800': activeTab !== 'payment'}" 
+                       class="group rounded-md px-3 py-2.5 flex items-center text-sm font-medium transition-all duration-200">
+                        <i class="fa-solid fa-credit-card mr-3 flex-shrink-0 h-5 w-5" 
+                           :class="{'text-primary-500': activeTab === 'payment', 'text-gray-400 group-hover:text-gray-500 dark:text-gray-500': activeTab !== 'payment'}"></i>
+                        <span class="truncate">Payment Methods</span>
+                    </a>
+
                     <!-- Worker Profile Tab (Only for Workers) -->
                     <template x-if="user.account_type === 'worker'">
                         <a href="#" @click.prevent="activeTab = 'worker_profile'" 
@@ -243,6 +252,45 @@
                     </div>
                 </div>
 
+                <!-- Payment Tab Content -->
+                <div x-show="activeTab === 'payment'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                    <div class="p-6 space-y-6">
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-4 flex justify-between items-center">
+                            <div>
+                                <h3 class="text-lg font-medium leading-6 text-gray-900 dark:text-white">Payment Methods</h3>
+                                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage your bank accounts for withdrawals.</p>
+                            </div>
+                            <button @click="showAddBankModal = true" class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                <i class="fas fa-plus mr-2"></i> Add Bank Account
+                            </button>
+                        </div>
+
+                        <div x-show="bankAccounts.length === 0" class="text-center py-10">
+                            <i class="fas fa-university text-4xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                            <p class="text-gray-500 dark:text-gray-400">No bank accounts added yet.</p>
+                        </div>
+
+                        <ul x-show="bankAccounts.length > 0" class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <template x-for="account in bankAccounts" :key="account.id">
+                                <li class="py-4 flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                                            <i class="fas fa-university text-gray-500 dark:text-gray-400"></i>
+                                        </div>
+                                        <div class="ml-4">
+                                            <h4 class="text-sm font-medium text-gray-900 dark:text-white" x-text="account.bank_name"></h4>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400" x-text="account.account_number + ' - ' + account.account_name"></p>
+                                        </div>
+                                    </div>
+                                    <button @click="deleteBankAccount(account.id)" class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 text-sm font-medium">
+                                        Remove
+                                    </button>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+
                 <!-- Appearance Tab Content -->
                 <div x-show="activeTab === 'appearance'" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
                     <div class="p-6 space-y-6">
@@ -358,6 +406,50 @@
             </div>
         </div>
     </div>
+
+    <!-- Add Bank Account Modal -->
+    <div x-show="showAddBankModal" class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="showAddBankModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="showAddBankModal = false"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div x-show="showAddBankModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+                <div>
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900">
+                        <i class="fas fa-university text-green-600 dark:text-green-300"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-5">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">Add Bank Account</h3>
+                        <div class="mt-2">
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="bank_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 text-left">Bank Name</label>
+                                    <input type="text" x-model="newBank.bank_name" id="bank_name" class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-2 px-3">
+                                </div>
+                                <div>
+                                    <label for="account_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 text-left">Account Number</label>
+                                    <input type="text" x-model="newBank.account_number" id="account_number" class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-2 px-3">
+                                </div>
+                                <div>
+                                    <label for="account_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 text-left">Account Name</label>
+                                    <input type="text" x-model="newBank.account_name" id="account_name" class="mt-1 focus:ring-primary-500 focus:border-primary-500 block w-full shadow-sm sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md py-2 px-3">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                    <button type="button" @click="addBankAccount()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:col-start-2 sm:text-sm">
+                        Add Account
+                    </button>
+                    <button type="button" @click="showAddBankModal = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:col-start-1 sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -382,12 +474,21 @@
                 skills: ['Harvesting', 'Planting']
             },
             newSkill: '',
+            
+            // Bank Accounts
+            bankAccounts: [],
+            showAddBankModal: false,
+            newBank: {
+                bank_name: '',
+                account_number: '',
+                account_name: ''
+            },
 
-            init() {
+            async init() {
                 // Check URL params for active tab
                 const urlParams = new URLSearchParams(window.location.search);
                 const tab = urlParams.get('tab');
-                if (tab && ['profile', 'security', 'verification', 'appearance', 'worker_profile'].includes(tab)) {
+                if (tab && ['profile', 'security', 'verification', 'appearance', 'worker_profile', 'payment'].includes(tab)) {
                     this.activeTab = tab;
                 }
 
@@ -400,8 +501,58 @@
                 
                 // Fetch latest user data
                 if (this.user.id) {
-                    // In a real app, fetch from API
-                    // fetch('/users/' + this.user.id).then(...)
+                    await this.fetchBankAccounts();
+                }
+            },
+            
+            async fetchBankAccounts() {
+                try {
+                    const res = await fetch(`/api/bank-accounts/${this.user.id}`);
+                    if (res.ok) {
+                        this.bankAccounts = await res.json();
+                    }
+                } catch (e) {
+                    console.error('Error fetching bank accounts:', e);
+                }
+            },
+
+            async addBankAccount() {
+                if (!this.newBank.bank_name || !this.newBank.account_number || !this.newBank.account_name) {
+                    alert('Please fill in all fields');
+                    return;
+                }
+                try {
+                    const res = await fetch('/api/bank-accounts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_id: this.user.id,
+                            ...this.newBank
+                        })
+                    });
+                    if (res.ok) {
+                        this.showAddBankModal = false;
+                        this.newBank = { bank_name: '', account_number: '', account_name: '' };
+                        this.fetchBankAccounts();
+                    } else {
+                        alert('Failed to add bank account');
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
+            },
+
+            async deleteBankAccount(id) {
+                if (!confirm('Are you sure?')) return;
+                try {
+                    const res = await fetch(`/api/bank-accounts/${id}`, {
+                        method: 'DELETE'
+                    });
+                    if (res.ok) {
+                        this.bankAccounts = this.bankAccounts.filter(b => b.id !== id);
+                    }
+                } catch (e) {
+                    console.error(e);
                 }
             },
 

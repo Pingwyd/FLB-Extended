@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-8" x-data="jobHistory()">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Job History</h1>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">View your completed and accepted jobs.</p>
+            </div>
+            <a href="/dashboard" class="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg border border-gray-200 dark:border-gray-700">
+            <div x-show="loading" class="p-10 flex justify-center">
+                <i class="fas fa-circle-notch fa-spin text-4xl text-green-600"></i>
+            </div>
+
+            <div x-show="!loading && jobs.length === 0" class="p-10 text-center">
+                <i class="fas fa-history text-4xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                <p class="text-gray-500 dark:text-gray-400">No job history found.</p>
+            </div>
+
+            <ul x-show="!loading && jobs.length > 0" class="divide-y divide-gray-200 dark:divide-gray-700">
+                <template x-for="job in jobs" :key="job.id">
+                    <li>
+                        <a :href="`/jobs/${job.id}`" class="block hover:bg-gray-50 dark:hover:bg-gray-700/50 transition duration-150 ease-in-out">
+                            <div class="px-4 py-4 sm:px-6">
+                                <div class="flex items-center justify-between">
+                                    <p class="text-sm font-medium text-green-600 dark:text-green-400 truncate" x-text="job.title"></p>
+                                    <div class="ml-2 flex-shrink-0 flex">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                            Accepted
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="mt-2 sm:flex sm:justify-between">
+                                    <div class="sm:flex">
+                                        <p class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                            <i class="fas fa-map-marker-alt flex-shrink-0 mr-1.5 text-gray-400"></i>
+                                            <span x-text="job.location || 'Remote'"></span>
+                                        </p>
+                                        <p class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0 sm:ml-6">
+                                            <i class="fas fa-money-bill-wave flex-shrink-0 mr-1.5 text-gray-400"></i>
+                                            <span x-text="job.salary_range || 'Negotiable'"></span>
+                                        </p>
+                                    </div>
+                                    <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
+                                        <i class="fas fa-calendar-alt flex-shrink-0 mr-1.5 text-gray-400"></i>
+                                        <p x-text="'Posted ' + new Date(job.created_at).toLocaleDateString()"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </li>
+                </template>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    function jobHistory() {
+        return {
+            jobs: [],
+            loading: true,
+            user: JSON.parse(localStorage.getItem('flb_user') || '{}'),
+
+            async init() {
+                if (!this.user.id) {
+                    window.location.href = '/login-page';
+                    return;
+                }
+                await this.fetchHistory();
+            },
+
+            async fetchHistory() {
+                this.loading = true;
+                try {
+                    const res = await fetch(`/api/my-job-history?user_id=${this.user.id}`);
+                    if (res.ok) {
+                        this.jobs = await res.json();
+                    } else {
+                        console.error('Failed to fetch job history');
+                    }
+                } catch (e) {
+                    console.error('Error:', e);
+                } finally {
+                    this.loading = false;
+                }
+            }
+        }
+    }
+</script>
+{% endblock %}

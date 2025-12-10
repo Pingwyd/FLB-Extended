@@ -8,7 +8,7 @@ import logging
 import requests
 import uuid
 import re
-from flask import Flask, request, jsonify, send_from_directory, render_template
+from flask import Flask, request, jsonify, send_from_directory, render_template, redirect, url_for
 import config
 import datetime
 from flask_limiter import Limiter
@@ -68,7 +68,8 @@ def create_app():
     )
 
     # Swagger UI configuration
-    SWAGGER_URL = '/api/docs'
+    # Serve swagger UI at a dedicated path so /api/docs can be a documentation landing page
+    SWAGGER_URL = '/api/docs/ui'
     API_URL = '/static/openapi.yaml'
 
     swaggerui_blueprint = get_swaggerui_blueprint(
@@ -79,6 +80,218 @@ def create_app():
         }
     )
     app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
+
+    # Initialize database per app instance
+    db_available = False
+    session_local = None
+    user_model = None
+    verification_doc_model = None
+    message_model = None
+    contract_model = None
+    listing_model = None
+    worker_profile_model = None
+    produce_calculation_model = None
+    shelf_life_prediction_model = None
+    crop_recommendation_model = None
+    report_model = None
+    admin_audit_log_model = None
+    forum_post_model = None
+    forum_comment_model = None
+    forum_vote_model = None
+    rating_model = None
+    wallet_model = None
+    transaction_model = None
+    bank_account_model = None
+    task_model = None
+    
+    try:
+        from sqlalchemy import create_engine, func
+        from sqlalchemy.orm import sessionmaker, joinedload
+        from models import (
+            Base,
+            User as ModelUser,
+            VerificationDocument as VerificationDocModel,
+            Message as MessageModel,
+            Contract as ContractModel,
+            Listing as ListingModel,
+            WorkerProfile as WorkerProfileModel,
+            ProduceCalculation as ProduceCalculationModel,
+            ShelfLifePrediction as ShelfLifePredictionModel,
+            CropRecommendation as CropRecommendationModel,
+            Report as ReportModel,
+            AdminAuditLog as AdminAuditLogModel,
+            ForumPost as ForumPostModel,
+            ForumComment as ForumCommentModel,
+            ForumVote as ForumVoteModel,
+            Rating as RatingModel,
+            Wallet as WalletModel,
+            Transaction as TransactionModel,
+            BankAccount as BankAccountModel,
+            Job as JobModel,
+            JobApplication as JobApplicationModel,
+            Task as TaskModel,
+        )
+
+        engine = create_engine(config.SQLALCHEMY_DATABASE_URI, echo=False)
+        session_local = sessionmaker(bind=engine)
+
+        # Create tables if they don't exist
+        Base.metadata.create_all(bind=engine)
+
+        user_model = ModelUser
+        verification_doc_model = VerificationDocModel
+        job_model = JobModel
+        job_application_model = JobApplicationModel
+        task_model = TaskModel
+        message_model = MessageModel
+        contract_model = ContractModel
+        listing_model = ListingModel
+        worker_profile_model = WorkerProfileModel
+        produce_calculation_model = ProduceCalculationModel
+        shelf_life_prediction_model = ShelfLifePredictionModel
+        crop_recommendation_model = CropRecommendationModel
+        report_model = ReportModel
+        admin_audit_log_model = AdminAuditLogModel
+        forum_post_model = ForumPostModel
+        forum_comment_model = ForumCommentModel
+        forum_vote_model = ForumVoteModel
+        rating_model = RatingModel
+        wallet_model = WalletModel
+        transaction_model = TransactionModel
+        bank_account_model = BankAccountModel
+        produce_calculation_model = ProduceCalculationModel
+        shelf_life_prediction_model = ShelfLifePredictionModel
+        crop_recommendation_model = CropRecommendationModel
+        report_model = ReportModel
+        admin_audit_log_model = AdminAuditLogModel
+        forum_post_model = ForumPostModel
+        forum_comment_model = ForumCommentModel
+        forum_vote_model = ForumVoteModel
+        db_available = True
+    except Exception:
+        # SQLAlchemy or model initialization failed
+        db_available = False
+
+    # ========== Authorization Decorators ==========
+    from functools import wraps
+    
+    def require_moderator(f):
+        """Decorator to require moderator, admin, or super_admin access"""
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not db_available:
+                return jsonify({'error': 'Database not available'}), 500
+            
+            # Get user_id from request (json body or query param)
+            user_id = None
+            if request.is_json:
+                user_id = request.json.get('admin_id')
+            if not user_id:
+                user_id = request.args.get('admin_id')
+                
+            if not user_id:
+                return jsonify({'error': 'admin_id required'}), 401
+            
+            session = session_local()
+            user = session.query(user_model).filter_by(id=user_id).first()
+            session.close()
+            
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            
+            if user.account_type not in ['moderator', 'admin', 'super_admin']:
+                return jsonify({'error': 'Moderator access required'}), 403
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    
+    def require_admin(f):
+        """Decorator to require admin or super_admin access"""
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not db_available:
+                return jsonify({'error': 'Database not available'}), 500
+            
+            # Get user_id from request (json body or query param)
+            user_id = None
+            if request.is_json:
+                user_id = request.json.get('admin_id')
+            if not user_id:
+                user_id = request.args.get('admin_id')
+
+            if not user_id:
+                return jsonify({'error': 'admin_id required'}), 401
+            
+            session = session_local()
+            user = session.query(user_model).filter_by(id=user_id).first()
+            session.close()
+            
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            
+            if user.account_type not in ['admin', 'super_admin']:
+                return jsonify({'error': 'Admin access required'}), 403
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    
+    def require_super_admin(f):
+        """Decorator to require super_admin access only"""
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not db_available:
+                return jsonify({'error': 'Database not available'}), 500
+            
+            # Get user_id from request (json body or query param)
+            user_id = None
+            if request.is_json:
+                user_id = request.json.get('admin_id')
+            if not user_id:
+                user_id = request.args.get('admin_id')
+
+            if not user_id:
+                return jsonify({'error': 'admin_id required'}), 401
+            
+            session = session_local()
+            user = session.query(user_model).filter_by(id=user_id).first()
+            session.close()
+            
+            if not user:
+                return jsonify({'error': 'User not found'}), 404
+            
+            if user.account_type != 'super_admin':
+                return jsonify({'error': 'Super Admin access required'}), 403
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    
+    def log_admin_action(admin_id, action, target_type, target_id, reason=None, details=None):
+        """Helper function to log admin actions to audit log"""
+        if not db_available:
+            return
+        
+        session = session_local()
+        try:
+            log_entry = admin_audit_log_model(
+                admin_id=admin_id,
+                action=action,
+                target_type=target_type,
+                target_id=target_id,
+                reason=reason,
+                details=details,
+                ip_address=request.remote_addr if request else None
+            )
+            session.add(log_entry)
+            session.commit()
+        except Exception:
+            session.rollback()
+        finally:
+            session.close()
+
+    # Expose a human-friendly API docs landing page at /api/docs (does not auto-open Swagger UI)
+    @app.route('/api/docs', strict_slashes=False)
+    def api_docs_page():
+        return render_template('api_docs.html')
 
     # Frontend Routes
     @app.route('/')
@@ -96,6 +309,41 @@ def create_app():
     @app.route('/dashboard')
     def dashboard_page():
         return render_template('dashboard.html')
+
+    @app.route('/admin/dashboard')
+    def admin_dashboard_page():
+        return render_template('admin_dashboard.html')
+
+    @app.route('/api/admin/stats', methods=['GET'])
+    @require_admin
+    def get_admin_stats():
+        """Get system statistics for admin dashboard"""
+        if not db_available or session_local is None:
+            return jsonify({'error': 'database not available'}), 503
+            
+        session = session_local()
+        try:
+            user_count = session.query(user_model).count()
+            job_count = session.query(job_model).count()
+            listing_count = session.query(listing_model).count()
+            pending_verifications = session.query(verification_doc_model).filter_by(status='pending').count()
+            
+            # Calculate total platform revenue (fees)
+            # Assuming fees are in the super_admin wallet or we sum fee transactions
+            # For now, let's just sum all transactions with type 'fee'
+            total_fees = session.query(transaction_model).filter_by(transaction_type='fee').with_entities(func.sum(transaction_model.amount)).scalar() or 0.0
+            
+            return jsonify({
+                'users': user_count,
+                'jobs': job_count,
+                'listings': listing_count,
+                'pending_verifications': pending_verifications,
+                'total_revenue': float(total_fees)
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        finally:
+            session.close()
 
     @app.route('/legal/privacy')
     def privacy_page():
@@ -149,6 +397,14 @@ def create_app():
     def worker_detail_page(id):
         return render_template('worker_detail.html')
 
+    @app.route('/jobs/history')
+    def job_history_page():
+        return render_template('job_history.html')
+
+    @app.route('/reviews')
+    def reviews_page():
+        return render_template('reviews.html')
+
     @app.route('/profile/<int:id>')
     def public_profile_page(id):
         return render_template('public_profile.html')
@@ -173,193 +429,6 @@ def create_app():
     def serve_openapi_spec():
         return send_from_directory(config.BASE_DIR, 'openapi.yaml')
     
-    # Initialize database per app instance
-    db_available = False
-    session_local = None
-    user_model = None
-    verification_doc_model = None
-    message_model = None
-    contract_model = None
-    listing_model = None
-    worker_profile_model = None
-    produce_calculation_model = None
-    shelf_life_prediction_model = None
-    crop_recommendation_model = None
-    report_model = None
-    admin_audit_log_model = None
-    forum_post_model = None
-    forum_comment_model = None
-    forum_vote_model = None
-    rating_model = None
-    wallet_model = None
-    transaction_model = None
-    bank_account_model = None
-    
-    try:
-        from sqlalchemy import create_engine
-        from sqlalchemy.orm import sessionmaker, joinedload
-        from models import (
-            Base,
-            User as ModelUser,
-            VerificationDocument as VerificationDocModel,
-            Message as MessageModel,
-            Contract as ContractModel,
-            Listing as ListingModel,
-            WorkerProfile as WorkerProfileModel,
-            ProduceCalculation as ProduceCalculationModel,
-            ShelfLifePrediction as ShelfLifePredictionModel,
-            CropRecommendation as CropRecommendationModel,
-            Report as ReportModel,
-            AdminAuditLog as AdminAuditLogModel,
-            ForumPost as ForumPostModel,
-            ForumComment as ForumCommentModel,
-            ForumVote as ForumVoteModel,
-            Rating as RatingModel,
-            Wallet as WalletModel,
-            Transaction as TransactionModel,
-            BankAccount as BankAccountModel,
-            Job as JobModel,
-            JobApplication as JobApplicationModel,
-        )
-
-        engine = create_engine(config.SQLALCHEMY_DATABASE_URI, echo=False)
-        session_local = sessionmaker(bind=engine)
-
-        # Create tables if they don't exist
-        Base.metadata.create_all(bind=engine)
-
-        user_model = ModelUser
-        verification_doc_model = VerificationDocModel
-        job_model = JobModel
-        job_application_model = JobApplicationModel
-        message_model = MessageModel
-        contract_model = ContractModel
-        listing_model = ListingModel
-        worker_profile_model = WorkerProfileModel
-        produce_calculation_model = ProduceCalculationModel
-        shelf_life_prediction_model = ShelfLifePredictionModel
-        crop_recommendation_model = CropRecommendationModel
-        report_model = ReportModel
-        admin_audit_log_model = AdminAuditLogModel
-        forum_post_model = ForumPostModel
-        forum_comment_model = ForumCommentModel
-        forum_vote_model = ForumVoteModel
-        rating_model = RatingModel
-        wallet_model = WalletModel
-        transaction_model = TransactionModel
-        bank_account_model = BankAccountModel
-        produce_calculation_model = ProduceCalculationModel
-        shelf_life_prediction_model = ShelfLifePredictionModel
-        crop_recommendation_model = CropRecommendationModel
-        report_model = ReportModel
-        admin_audit_log_model = AdminAuditLogModel
-        forum_post_model = ForumPostModel
-        forum_comment_model = ForumCommentModel
-        forum_vote_model = ForumVoteModel
-        db_available = True
-    except Exception:
-        # SQLAlchemy or model initialization failed
-        db_available = False
-
-    # ========== Authorization Decorators ==========
-    from functools import wraps
-    
-    def require_moderator(f):
-        """Decorator to require moderator, admin, or super_admin access"""
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not db_available:
-                return jsonify({'error': 'Database not available'}), 500
-            
-            # Get user_id from request (you may need to adapt based on your auth system)
-            user_id = request.json.get('admin_id') if request.json else None
-            if not user_id:
-                return jsonify({'error': 'admin_id required'}), 401
-            
-            session = session_local()
-            user = session.query(user_model).filter_by(id=user_id).first()
-            session.close()
-            
-            if not user:
-                return jsonify({'error': 'User not found'}), 404
-            
-            if user.account_type not in ['moderator', 'admin', 'super_admin']:
-                return jsonify({'error': 'Moderator access required'}), 403
-            
-            return f(*args, **kwargs)
-        return decorated_function
-    
-    def require_admin(f):
-        """Decorator to require admin or super_admin access"""
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not db_available:
-                return jsonify({'error': 'Database not available'}), 500
-            
-            user_id = request.json.get('admin_id') if request.json else None
-            if not user_id:
-                return jsonify({'error': 'admin_id required'}), 401
-            
-            session = session_local()
-            user = session.query(user_model).filter_by(id=user_id).first()
-            session.close()
-            
-            if not user:
-                return jsonify({'error': 'User not found'}), 404
-            
-            if user.account_type not in ['admin', 'super_admin']:
-                return jsonify({'error': 'Admin access required'}), 403
-            
-            return f(*args, **kwargs)
-        return decorated_function
-    
-    def require_super_admin(f):
-        """Decorator to require super_admin access only"""
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if not db_available:
-                return jsonify({'error': 'Database not available'}), 500
-            
-            user_id = request.json.get('admin_id') if request.json else None
-            if not user_id:
-                return jsonify({'error': 'admin_id required'}), 401
-            
-            session = session_local()
-            user = session.query(user_model).filter_by(id=user_id).first()
-            session.close()
-            
-            if not user:
-                return jsonify({'error': 'User not found'}), 404
-            
-            if user.account_type != 'super_admin':
-                return jsonify({'error': 'Super Admin access required'}), 403
-            
-            return f(*args, **kwargs)
-        return decorated_function
-    
-    def log_admin_action(admin_id, action, target_type, target_id, reason=None, details=None):
-        """Helper function to log admin actions to audit log"""
-        if not db_available:
-            return
-        
-        session = session_local()
-        try:
-            log_entry = admin_audit_log_model(
-                admin_id=admin_id,
-                action=action,
-                target_type=target_type,
-                target_id=target_id,
-                reason=reason,
-                details=details,
-                ip_address=request.remote_addr if request else None
-            )
-            session.add(log_entry)
-            session.commit()
-        except Exception:
-            session.rollback()
-        finally:
-            session.close()
-
     # ---------------- Job application endpoints ----------------
     @app.route('/api/jobs/<int:job_id>/apply', methods=['POST'])
     def apply_to_job(job_id):
@@ -3193,29 +3262,76 @@ def create_app():
             if abs(verified_amount_kobo - expected_amount_kobo) <= 10: # Tolerance of 10 kobo
                 # Update transaction
                 transaction.status = 'success'
-                
+
                 # Update wallet balance
                 wallet = session.query(wallet_model).filter_by(id=transaction.wallet_id).first()
                 if wallet:
                     wallet.balance += transaction.amount
-                
+
+                # Create a notification/message for the user (simple hook)
+                try:
+                    # Determine user id from wallet
+                    user_id = wallet.user_id if wallet else None
+                    if user_id and message_model is not None:
+                        msg_subject = 'Wallet credited'
+                        msg_body = f"Your wallet has been credited with ₦{transaction.amount:.2f}. New balance: ₦{wallet.balance:.2f}"
+                        msg = message_model(sender_id=user_id, recipient_id=user_id, subject=msg_subject, content=msg_body)
+                        session.add(msg)
+                except Exception as e:
+                    logging.exception('Failed to create deposit notification: %s', e)
+
                 # Capture values before closing session
                 amount = transaction.amount
                 new_balance = wallet.balance if wallet else 0
-                
+
                 session.commit()
                 session.close()
+                # If this was a browser redirect (user returning from the payment page), send them to the wallet UI.
+                # Detect browser returns by checking Accept and User-Agent headers so POSTs from the provider
+                # that are intended to be browser redirects will also be redirected to the wallet UI.
+                ua = (request.headers.get('User-Agent') or '').lower()
+                accept = (request.headers.get('Accept') or '').lower()
+                is_browser_return = (
+                    ('text/html' in accept) or
+                    ('mozilla' in ua) or
+                    bool(request.headers.get('Referer'))
+                ) and (request.values.get('txn_ref') or request.values.get('txnref'))
+                if is_browser_return:
+                    # Include minimal info as query params so the frontend can show a message.
+                    redirect_url = request.host_url.rstrip('/') + url_for('wallet_page') + f"?payment=success&txn_ref={reference}&amount={amount}"
+                    return redirect(redirect_url)
                 return jsonify({'status': 'success', 'message': 'Payment successful', 'amount': amount, 'new_balance': new_balance}), 200
             else:
                 transaction.status = 'failed' # Amount mismatch
                 session.commit()
                 session.close()
+                # Redirect browser back to wallet with failure info if appropriate
+                ua = (request.headers.get('User-Agent') or '').lower()
+                accept = (request.headers.get('Accept') or '').lower()
+                is_browser_return = (
+                    ('text/html' in accept) or
+                    ('mozilla' in ua) or
+                    bool(request.headers.get('Referer'))
+                ) and (request.values.get('txn_ref') or request.values.get('txnref'))
+                if is_browser_return:
+                    redirect_url = request.host_url.rstrip('/') + url_for('wallet_page') + f"?payment=failed&reason=amount_mismatch&txn_ref={reference}"
+                    return redirect(redirect_url)
                 return jsonify({'error': f'Payment verification failed: Amount mismatch. Expected {expected_amount_kobo}, got {verified_amount_kobo}'}), 400
         else:
             transaction.status = 'failed'
             session.commit()
             session.close()
             reason = verification.get('ResponseDescription') if verification else 'Unknown error'
+            ua = (request.headers.get('User-Agent') or '').lower()
+            accept = (request.headers.get('Accept') or '').lower()
+            is_browser_return = (
+                ('text/html' in accept) or
+                ('mozilla' in ua) or
+                bool(request.headers.get('Referer'))
+            ) and (request.values.get('txn_ref') or request.values.get('txnref'))
+            if is_browser_return:
+                redirect_url = request.host_url.rstrip('/') + url_for('wallet_page') + f"?payment=failed&reason={reason}&txn_ref={reference}"
+                return redirect(redirect_url)
             return jsonify({'error': f'Payment verification failed: {reason}'}), 400
 
     @app.route('/api/wallet/balance/<int:user_id>', methods=['GET'])
@@ -3306,6 +3422,7 @@ def create_app():
         )
         session.add(account)
         session.commit()
+        session.refresh(account)
         
         result = account.to_dict()
         session.close()
@@ -3346,14 +3463,26 @@ def create_app():
 
         session = session_local()
         
+        # Get user to check account type for fee exemption
+        user = session.query(user_model).get(user_id)
+        if not user:
+            session.close()
+            return jsonify({'error': 'User not found'}), 404
+
+        # Determine fee
+        fee = config.WITHDRAWAL_FEE
+        # Exempt super_admin (Business Account) from fees
+        if user.account_type == 'super_admin':
+            fee = 0.0
+
         # Check wallet balance
         wallet = session.query(wallet_model).filter_by(user_id=user_id).first()
         
-        total_deduction = amount + config.WITHDRAWAL_FEE
+        total_deduction = amount + fee
         
         if not wallet or wallet.balance < total_deduction:
             session.close()
-            return jsonify({'error': f'Insufficient funds. Balance must cover amount + fee ({config.WITHDRAWAL_FEE})'}), 400
+            return jsonify({'error': f'Insufficient funds. Balance must cover amount + fee ({fee})'}), 400
 
         # Check bank account ownership
         bank_account = session.query(bank_account_model).filter_by(id=bank_account_id, user_id=user_id).first()
@@ -3376,17 +3505,37 @@ def create_app():
         )
         session.add(transaction)
         
-        # Create transaction record for fee
-        fee_reference = f"FEE-{uuid.uuid4().hex[:12].upper()}"
-        fee_transaction = transaction_model(
-            wallet_id=wallet.id,
-            amount=config.WITHDRAWAL_FEE,
-            transaction_type='fee',
-            status='success', # Fee is taken immediately
-            reference=fee_reference,
-            description=f"Fee for withdrawal {reference}"
-        )
-        session.add(fee_transaction)
+        # Handle Fee
+        fee_tx_id = None
+        if fee > 0:
+            # 1. Create transaction record for fee deduction (User side)
+            fee_reference = f"FEE-{uuid.uuid4().hex[:12].upper()}"
+            fee_transaction = transaction_model(
+                wallet_id=wallet.id,
+                amount=fee,
+                transaction_type='fee',
+                status='success', # Fee is taken immediately
+                reference=fee_reference,
+                description=f"Fee for withdrawal {reference}"
+            )
+            session.add(fee_transaction)
+            
+            # 2. Credit Fee to Business Account (Super Admin)
+            # Find the super admin user
+            system_user = session.query(user_model).filter_by(account_type='super_admin').first()
+            if system_user:
+                system_wallet = session.query(wallet_model).filter_by(user_id=system_user.id).first()
+                if system_wallet:
+                    system_wallet.balance += fee
+                    system_fee_credit = transaction_model(
+                        wallet_id=system_wallet.id,
+                        amount=fee,
+                        transaction_type='deposit', # Treat as deposit/income
+                        status='success',
+                        reference=f"INC-{fee_reference}",
+                        description=f"Fee income from withdrawal {reference}"
+                    )
+                    session.add(system_fee_credit)
         
         session.commit()
         
@@ -3394,15 +3543,19 @@ def create_app():
         # For this implementation, we leave it as 'pending' for admin review or manual processing
         
         result = transaction.to_dict()
-        fee_tx_id = fee_transaction.id
+        if fee > 0:
+            # We need to refresh to get the ID if we want to return it, 
+            # but since we committed, we might need to query it or just rely on the object if session is still valid.
+            # However, session.commit() expires objects.
+            pass
+
         new_balance = wallet.balance
         session.close()
         
         return jsonify({
             'message': 'Withdrawal request submitted successfully',
             'transaction': result,
-            'fee_transaction_id': fee_tx_id,
-            'fee_amount': config.WITHDRAWAL_FEE,
+            'fee_amount': fee,
             'new_balance': new_balance
         }), 201
 
@@ -3936,6 +4089,62 @@ def create_app():
         finally:
             session.close()
 
+    @app.route('/api/my-job-history', methods=['GET'])
+    def get_my_job_history():
+        if not db_available or session_local is None or job_model is None or job_application_model is None:
+            return jsonify({'error': 'database not available'}), 503
+        
+        user_id = request.args.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'user_id required'}), 400
+            
+        session = session_local()
+        try:
+            # Find applications by this user that are accepted
+            applications = session.query(job_application_model).filter_by(
+                applicant_id=user_id, 
+                status='accepted'
+            ).all()
+            
+            job_ids = [app.job_id for app in applications]
+            
+            if not job_ids:
+                return jsonify([])
+                
+            jobs = session.query(job_model).filter(job_model.id.in_(job_ids)).all()
+            return jsonify([job.to_dict() for job in jobs])
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        finally:
+            session.close()
+
+    @app.route('/api/my-reviews', methods=['GET'])
+    def get_my_reviews():
+        if not db_available or session_local is None or rating_model is None:
+            return jsonify({'error': 'database not available'}), 503
+        
+        user_id = request.args.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'user_id required'}), 400
+            
+        session = session_local()
+        try:
+            ratings = session.query(rating_model).filter_by(rated_user_id=user_id).all()
+            
+            # Enhance with rater name
+            results = []
+            for r in ratings:
+                d = r.to_dict()
+                if r.rater:
+                    d['rater_name'] = r.rater.full_name
+                results.append(d)
+                
+            return jsonify(results)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        finally:
+            session.close()
+
     @app.route('/users/<int:user_id>', methods=['PUT'])
     def update_user(user_id):
         """Update user profile information"""
@@ -4059,6 +4268,104 @@ def create_app():
                 'recentApplications': applications_data
             })
         except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        finally:
+            session.close()
+
+    # ========== TASK ENDPOINTS ==========
+
+    @app.route('/api/tasks', methods=['GET'])
+    def get_tasks():
+        if not db_available or session_local is None or task_model is None:
+            return jsonify({'error': 'database not available'}), 503
+        
+        user_id = request.args.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'user_id required'}), 400
+            
+        session = session_local()
+        try:
+            tasks = session.query(task_model).filter_by(user_id=user_id).order_by(task_model.due_date).all()
+            return jsonify([t.to_dict() for t in tasks])
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        finally:
+            session.close()
+
+    @app.route('/api/tasks', methods=['POST'])
+    def create_task():
+        if not db_available or session_local is None or task_model is None:
+            return jsonify({'error': 'database not available'}), 503
+        
+        data = request.get_json()
+        if not data or 'user_id' not in data or 'title' not in data:
+            return jsonify({'error': 'Missing required fields'}), 400
+            
+        session = session_local()
+        try:
+            due_date = None
+            if data.get('due_date'):
+                due_date = datetime.datetime.fromisoformat(data['due_date'].replace('Z', '+00:00'))
+
+            new_task = task_model(
+                user_id=data['user_id'],
+                title=data['title'],
+                description=data.get('description'),
+                due_date=due_date,
+                status='pending'
+            )
+            session.add(new_task)
+            session.commit()
+            return jsonify(new_task.to_dict()), 201
+        except Exception as e:
+            session.rollback()
+            return jsonify({'error': str(e)}), 500
+        finally:
+            session.close()
+
+    @app.route('/api/tasks/<int:task_id>', methods=['PUT'])
+    def update_task(task_id):
+        if not db_available or session_local is None or task_model is None:
+            return jsonify({'error': 'database not available'}), 503
+        
+        data = request.get_json()
+        session = session_local()
+        try:
+            task = session.query(task_model).get(task_id)
+            if not task:
+                return jsonify({'error': 'Task not found'}), 404
+            
+            if 'status' in data:
+                task.status = data['status']
+            if 'title' in data:
+                task.title = data['title']
+            if 'description' in data:
+                task.description = data['description']
+            
+            session.commit()
+            return jsonify(task.to_dict())
+        except Exception as e:
+            session.rollback()
+            return jsonify({'error': str(e)}), 500
+        finally:
+            session.close()
+
+    @app.route('/api/tasks/<int:task_id>', methods=['DELETE'])
+    def delete_task(task_id):
+        if not db_available or session_local is None or task_model is None:
+            return jsonify({'error': 'database not available'}), 503
+            
+        session = session_local()
+        try:
+            task = session.query(task_model).get(task_id)
+            if not task:
+                return jsonify({'error': 'Task not found'}), 404
+            
+            session.delete(task)
+            session.commit()
+            return jsonify({'message': 'Task deleted'})
+        except Exception as e:
+            session.rollback()
             return jsonify({'error': str(e)}), 500
         finally:
             session.close()

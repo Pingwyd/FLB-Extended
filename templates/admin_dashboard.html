@@ -1,0 +1,157 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Admin Dashboard - FLB{% endblock %}
+{% block header_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div x-data="adminDashboard()">
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <!-- Total Users -->
+        <div class="bg-gray-800 overflow-hidden shadow rounded-lg border border-gray-700">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-users text-gray-400 text-3xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-400 truncate">Total Users</dt>
+                            <dd class="text-lg font-medium text-white" x-text="stats.total_users">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Jobs -->
+        <div class="bg-gray-800 overflow-hidden shadow rounded-lg border border-gray-700">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-briefcase text-gray-400 text-3xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-400 truncate">Active Jobs</dt>
+                            <dd class="text-lg font-medium text-white" x-text="stats.active_jobs">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Verifications -->
+        <div class="bg-gray-800 overflow-hidden shadow rounded-lg border border-gray-700">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-user-check text-gray-400 text-3xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-400 truncate">Pending Verifications</dt>
+                            <dd class="text-lg font-medium text-white" x-text="stats.pending_verifications">0</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Platform Revenue -->
+        <div class="bg-gray-800 overflow-hidden shadow rounded-lg border border-gray-700">
+            <div class="p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-wallet text-gray-400 text-3xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-400 truncate">Platform Revenue</dt>
+                            <dd class="text-lg font-medium text-white" x-text="formatCurrency(stats.platform_revenue)">$0.00</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity & Quick Actions -->
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <!-- Recent Activity -->
+        <div class="bg-gray-800 shadow rounded-lg border border-gray-700">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-700">
+                <h3 class="text-lg leading-6 font-medium text-white">Recent Activity</h3>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                <ul class="divide-y divide-gray-700">
+                    <template x-for="activity in recentActivity" :key="activity.id">
+                        <li class="py-4">
+                            <div class="flex space-x-3">
+                                <div class="flex-1 space-y-1">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="text-sm font-medium text-white" x-text="activity.title"></h3>
+                                        <p class="text-sm text-gray-400" x-text="formatDate(activity.created_at)"></p>
+                                    </div>
+                                    <p class="text-sm text-gray-400" x-text="activity.description"></p>
+                                </div>
+                            </div>
+                        </li>
+                    </template>
+                    <li x-show="recentActivity.length === 0" class="py-4 text-center text-gray-400">
+                        No recent activity
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-gray-800 shadow rounded-lg border border-gray-700">
+            <div class="px-4 py-5 sm:px-6 border-b border-gray-700">
+                <h3 class="text-lg leading-6 font-medium text-white">Quick Actions</h3>
+            </div>
+            <div class="px-4 py-5 sm:p-6">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <a href="/admin/users-page" class="relative rounded-lg border border-gray-600 bg-gray-700 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-500 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-user-plus text-primary-500 text-2xl"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <span class="absolute inset-0" aria-hidden="true"></span>
+                            <p class="text-sm font-medium text-white">Review Users</p>
+                            <p class="text-sm text-gray-400 truncate">Approve new registrations</p>
+                        </div>
+                    </a>
+
+                    <a href="/admin/moderation-page" class="relative rounded-lg border border-gray-600 bg-gray-700 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-500 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-flag text-red-500 text-2xl"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <span class="absolute inset-0" aria-hidden="true"></span>
+                            <p class="text-sm font-medium text-white">Moderation Queue</p>
+                            <p class="text-sm text-gray-400 truncate">Review reported content</p>
+                        </div>
+                    </a>
+                    
+                    <!-- Super Admin Only Actions -->
+                    <template x-if="currentUser.account_type === 'super_admin'">
+                        <a href="/admin/settings" class="relative rounded-lg border border-gray-600 bg-gray-700 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-gray-500 focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-cog text-gray-400 text-2xl"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <span class="absolute inset-0" aria-hidden="true"></span>
+                                <p class="text-sm font-medium text-white">System Settings</p>
+                                <p class="text-sm text-gray-400 truncate">Configure platform fees</p>
+                            </div>
+                        </a>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/admin_dashboard.js"></script>
+{% endblock %}

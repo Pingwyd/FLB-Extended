@@ -57,12 +57,116 @@
                 </dl>
             </div>
             <div
-                class="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-right sm:px-6 border-t border-gray-200 dark:border-gray-700">
-                <button @click="applyForJob"
-                    class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-                    <i class="fa-solid fa-paper-plane mr-2"></i>
-                    Apply Now
-                </button>
+                class="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-right sm:px-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
+                
+                <!-- Employer View -->
+                <template x-if="isEmployer">
+                    <button @click="openApplicationsModal"
+                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                        <i class="fa-solid fa-users mr-2"></i>
+                        View Applications
+                    </button>
+                </template>
+
+                <!-- Worker View -->
+                <template x-if="!isEmployer">
+                    <button @click="openApplyModal"
+                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                        <i class="fa-solid fa-paper-plane mr-2"></i>
+                        Apply Now
+                    </button>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Apply Modal -->
+    <div x-show="showApplyModal" class="fixed z-10 inset-0 overflow-y-auto" style="display: none;">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+                                Apply for <span x-text="job.title"></span>
+                            </h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500 dark:text-gray-400">
+                                    Introduce yourself and explain why you're a good fit for this job.
+                                </p>
+                                <textarea x-model="coverLetter" rows="5" class="mt-2 shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white" placeholder="Write your cover letter here..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button @click="submitApplication" type="button" :disabled="isApplying"
+                        class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50">
+                        <span x-show="!isApplying">Submit Application</span>
+                        <span x-show="isApplying"><i class="fas fa-spinner fa-spin"></i> Sending...</span>
+                    </button>
+                    <button @click="showApplyModal = false" type="button"
+                        class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-500 shadow-sm px-4 py-2 bg-white dark:bg-gray-600 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Applications Modal -->
+    <div x-show="showApplicationsModal" class="fixed z-10 inset-0 overflow-y-auto" style="display: none;">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+                <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
+                        Applications for <span x-text="job.title"></span>
+                    </h3>
+                    
+                    <div x-show="isLoadingApplications" class="text-center py-4">
+                        <i class="fas fa-spinner fa-spin text-2xl text-green-600"></i>
+                    </div>
+
+                    <div x-show="!isLoadingApplications && applications.length === 0" class="text-center py-4 text-gray-500">
+                        No applications yet.
+                    </div>
+
+                    <div x-show="!isLoadingApplications && applications.length > 0" class="space-y-4 max-h-96 overflow-y-auto">
+                        <template x-for="app in applications" :key="app.id">
+                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="text-sm font-bold text-gray-900 dark:text-white">Applicant ID: <span x-text="app.applicant_id"></span></h4>
+                                        <p class="text-xs text-gray-500" x-text="formatDate(app.created_at)"></p>
+                                    </div>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                        :class="{'bg-yellow-100 text-yellow-800': app.status === 'pending', 'bg-green-100 text-green-800': app.status === 'accepted', 'bg-red-100 text-red-800': app.status === 'rejected'}"
+                                        x-text="app.status"></span>
+                                </div>
+                                <div class="mt-2">
+                                    <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line" x-text="app.cover_letter"></p>
+                                </div>
+                                <div class="mt-3 flex space-x-2">
+                                    <a :href="`/profile/${app.applicant_id}`" target="_blank" class="text-xs text-blue-600 hover:underline">View Profile</a>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button @click="showApplicationsModal = false" type="button"
+                        class="w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-500 shadow-sm px-4 py-2 bg-white dark:bg-gray-600 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Close
+                    </button>
+                </div>
             </div>
         </div>
     </div>

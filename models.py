@@ -771,6 +771,18 @@ class BankAccount(Base):
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'bank_name': self.bank_name,
+            'account_number': self.account_number,
+            'account_name': self.account_name,
+            'bank_code': self.bank_code,
+            'is_default': self.is_default,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
 class Rating(Base):
     __tablename__ = 'ratings'
     id = Column(Integer, primary_key=True)
@@ -853,5 +865,29 @@ class JobApplication(Base):
             'applicant_email': self.applicant.email if self.applicant else "",
             'status': self.status,
             'cover_letter': self.cover_letter,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class Task(Base):
+    __tablename__ = 'tasks'
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=True)
+    due_date = Column(DateTime, nullable=True)
+    status = Column(String(50), default='pending') # pending, completed, cancelled
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
+
+    user = relationship('User', backref='tasks')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'user_id': self.user_id,
+            'title': self.title,
+            'description': self.description,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'status': self.status,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }

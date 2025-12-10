@@ -27,10 +27,34 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-3 border-t border-gray-200 dark:border-gray-700">
-                <div class="text-sm flex space-x-4">
-                    <button @click="showDepositModal = true" class="font-medium text-primary-700 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300">Deposit Funds</button>
-                    <button @click="showWithdrawModal = true" class="font-medium text-primary-700 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300">Withdraw Funds</button>
+            <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="sm:flex sm:items-center sm:justify-between">
+                    <div class="flex items-center gap-6">
+                        <div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Available</div>
+                            <div class="text-xl font-bold text-gray-900 dark:text-white" x-text="'₦' + availableDisplay"></div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Pending Incoming</div>
+                            <div class="text-sm font-semibold text-yellow-700 dark:text-yellow-300" x-text="'₦' + pendingIncoming.toLocaleString(undefined, {minimumFractionDigits:2})"></div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">Pending Outgoing</div>
+                            <div class="text-sm font-semibold text-red-600 dark:text-red-300" x-text="'₦' + pendingOutgoing.toLocaleString(undefined, {minimumFractionDigits:2})"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 sm:mt-0 flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                        <button @click="showDepositModal = true" class="inline-flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                            <i class="fas fa-plus-circle mr-2"></i> Deposit Funds
+                        </button>
+                        <button :disabled="disableWithdraw" @click="showWithdrawModal = (disableWithdraw ? false : true)" :class="disableWithdraw ? 'opacity-50 cursor-not-allowed' : ''" class="inline-flex justify-center items-center px-4 py-2 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors">
+                            <i class="fas fa-minus-circle mr-2"></i> Withdraw Funds
+                        </button>
+                    </div>
+                </div>
+                <div x-show="disableWithdraw" class="mt-3 text-xs text-yellow-700 dark:text-yellow-300">
+                    You have pending incoming deposits. Withdrawals are disabled until pending deposits are verified.
                 </div>
             </div>
         </div>
@@ -52,7 +76,7 @@
                             </thead>
                             <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <template x-for="tx in transactions" :key="tx.id">
-                                    <tr>
+                                    <tr :class="tx.status === 'pending' ? 'bg-yellow-50 dark:bg-yellow-900/10' : ''">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="new Date(tx.created_at).toLocaleDateString()"></td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white" x-text="tx.description || tx.transaction_type"></td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" 
@@ -100,6 +124,7 @@
                             <p class="text-sm text-gray-500 dark:text-gray-400">
                                 Enter the amount you want to add to your wallet.
                             </p>
+                            <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Note: Payments are processed by Interswitch. Funds are held by the payment provider during processing and will be credited to your FLB wallet after payment verification (usually a few minutes). Do not close the payment page until the gateway redirects you back.</p>
                             <div class="mt-4">
                                 <label for="deposit-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 text-left">Amount (₦)</label>
                                 <div class="mt-1 relative rounded-md shadow-sm">
@@ -189,6 +214,10 @@
             transactions: [],
             bankAccounts: [],
             
+            // Computed amounts
+            pendingIncoming: 0,
+            pendingOutgoing: 0,
+
             // Modal states
             showDepositModal: false,
             showWithdrawModal: false,
@@ -225,10 +254,36 @@
                     const res = await fetch(`/api/wallet/transactions/${this.user.id}`);
                     if (res.ok) {
                         this.transactions = await res.json();
+                        this.computePendingTotals();
                     }
                 } catch (e) {
                     console.error('Error fetching transactions:', e);
                 }
+            },
+
+            computePendingTotals() {
+                let inc = 0;
+                let out = 0;
+                for (const tx of this.transactions) {
+                    if ((tx.transaction_type === 'credit' || tx.transaction_type === 'fund') && (tx.status === 'pending')) {
+                        inc += Number(tx.amount || 0);
+                    }
+                    if ((tx.transaction_type === 'withdrawal' || tx.transaction_type === 'debit') && (tx.status === 'pending')) {
+                        out += Number(tx.amount || 0);
+                    }
+                }
+                this.pendingIncoming = inc;
+                this.pendingOutgoing = out;
+            },
+
+            get availableDisplay() {
+                // `balance` is the confirmed wallet balance. Show as currency string.
+                return this.balance.toLocaleString(undefined, {minimumFractionDigits:2});
+            },
+
+            get disableWithdraw() {
+                // Disable withdraw when there are pending incoming deposits (prevents withdrawing unverified funds)
+                return this.pendingIncoming > 0;
             },
 
             async fetchBankAccounts() {
@@ -263,6 +318,23 @@
                     const data = await res.json();
                     
                     if (res.ok) {
+                        // Optionally show the pending transaction immediately in the UI
+                        try {
+                            const tempTx = {
+                                id: 'pending-' + (data.txn_ref || Math.random().toString(36).slice(2)),
+                                created_at: new Date().toISOString(),
+                                description: 'Deposit (awaiting verification)',
+                                amount: Number(this.depositAmount),
+                                transaction_type: 'credit',
+                                status: 'pending',
+                                reference: data.txn_ref
+                            };
+                            this.transactions.unshift(tempTx);
+                            this.computePendingTotals();
+                        } catch (e) {
+                            // ignore UI bookkeeping errors
+                        }
+
                         // Create and submit form for Interswitch
                         this.submitPaymentForm(data);
                     } else {

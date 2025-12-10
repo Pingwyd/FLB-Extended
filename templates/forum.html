@@ -272,19 +272,40 @@
                 </form>
             </div>
         </div>
+    </div>
 
-        // Remove the button
-        btn.remove();
+    <script>
+        // Global helper functions for the recursive HTML generation
+        window.triggerReply = function(id) {
+            window.dispatchEvent(new CustomEvent('trigger-reply', { detail: { id } }));
+        };
 
-        // Render the hidden comments
-        const html = window.renderCommentsGlobal(comments, depth);
+        window.submitReplyGlobal = function(id) {
+            const input = document.getElementById(`reply-input-${id}`);
+            if (input && input.value.trim()) {
+                window.dispatchEvent(new CustomEvent('submit-reply-global', { detail: { id, content: input.value } }));
+                input.value = '';
+            }
+        };
 
-        // Append the new HTML
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        while (tempDiv.firstChild) {
-        container.appendChild(tempDiv.firstChild);
-        }
+        window.expandComments = function(btn, commentsJson, depth) {
+            const comments = JSON.parse(decodeURIComponent(commentsJson));
+            const container = btn.parentElement; // The div containing the button
+            
+            // Remove the button
+            btn.remove();
+
+            // Render the hidden comments
+            if (window.renderCommentsGlobal) {
+                const html = window.renderCommentsGlobal(comments, depth);
+                
+                // Append the new HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                while (tempDiv.firstChild) {
+                    container.appendChild(tempDiv.firstChild);
+                }
+            }
         };
 
         function forumApp() {
@@ -360,9 +381,7 @@
 
         comments.slice(0, visibleCount).forEach(comment => {
         const isBanned = comment.author_is_banned;
-        const bannedBadge = isBanned ? '<span
-            class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Banned</span>'
-        : '';
+        const bannedBadge = isBanned ? `<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Banned</span>` : '';
         const authorName = comment.author_name || 'User ' + comment.author_id;
 
         // Indentation for depth

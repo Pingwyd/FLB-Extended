@@ -2,8 +2,24 @@ function jobDetail() {
     return {
         job: {},
         loading: true,
+        currentUser: null,
+        
+        // Apply Modal State
+        showApplyModal: false,
+        coverLetter: '',
+        isApplying: false,
+
+        // Applications Modal State
+        showApplicationsModal: false,
+        applications: [],
+        isLoadingApplications: false,
 
         async init() {
+            const userStr = localStorage.getItem('flb_user');
+            if (userStr) {
+                this.currentUser = JSON.parse(userStr);
+            }
+
             const pathParts = window.location.pathname.split('/');
             const jobId = pathParts[pathParts.length - 1];
 
@@ -30,28 +46,66 @@ function jobDetail() {
             }
         },
 
-        async applyForJob() {
-            // Check if user is logged in
-            const userStr = localStorage.getItem('flb_user');
-            if (!userStr) {
-                alert('Please login to apply for this job.');
+        get isEmployer() {
+            return this.currentUser && this.job && this.currentUser.id === this.job.employer_id;
+        },
+
+        openApplyModal() {
+            if (!this.currentUser) {
+                alert('Please login to apply.');
                 window.location.href = '/login-page';
                 return;
             }
+            this.showApplyModal = true;
+        },
 
-            const user = JSON.parse(userStr);
-
-            // Check if user is trying to apply to their own job
-            if (this.job.farmer_id === user.id) {
-                alert('You cannot apply to your own job posting!');
+        async submitApplication() {
+            if (!this.coverLetter.trim()) {
+                alert('Please write a cover letter.');
                 return;
             }
+            
+            this.isApplying = true;
+            try {
+                const response = await fetch(`/api/jobs/${this.job.id}/apply`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: this.currentUser.id,
+                        cover_letter: this.coverLetter
+                    })
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    alert('Application submitted successfully!');
+                    this.showApplyModal = false;
+                    this.coverLetter = '';
+                } else {
+                    alert(data.error || 'Failed to submit application.');
+                }
+            } catch (error) {
+                console.error('Error applying:', error);
+                alert('An error occurred.');
+            } finally {
+                this.isApplying = false;
+            }
+        },
 
-            // For now, show confirmation and redirect to messages
-            // In future, this could create a JobApplication record
-            if (confirm(`Apply for "${this.job.title}"?\n\nThis will send a message to the employer.`)) {
-                // Redirect to messages with the job poster
-                window.location.href = `/messages?recipient=${this.job.farmer_id}&job=${this.job.id}`;
+        async openApplicationsModal() {
+            this.showApplicationsModal = true;
+            this.isLoadingApplications = true;
+            try {
+                const response = await fetch(`/api/jobs/${this.job.id}/applications?employer_id=${this.currentUser.id}`);
+                if (response.ok) {
+                    this.applications = await response.json();
+                } else {
+                    alert('Failed to fetch applications.');
+                }
+            } catch (error) {
+                console.error('Error fetching applications:', error);
+            } finally {
+                this.isLoadingApplications = false;
             }
         },
 

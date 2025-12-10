@@ -11,6 +11,15 @@ function dashboard() {
             rating: 0
         },
         recentApplications: [],
+        
+        // Task Management
+        tasks: [],
+        isLoadingTasks: false,
+        showTaskModal: false,
+        newTask: {
+            title: '',
+            due_date: ''
+        },
 
         async init() {
             if (!localStorage.getItem('is_logged_in')) {
@@ -18,8 +27,15 @@ function dashboard() {
                 return;
             }
 
+            // Redirect admins to admin dashboard
+            if (['admin', 'super_admin', 'moderator'].includes(this.user.account_type)) {
+                window.location.href = '/admin/dashboard';
+                return;
+            }
+
             if (this.user.id) {
                 await this.fetchContracts();
+                await this.fetchTasks(); // Load tasks for all users
                 if (this.user.account_type === 'farmer') {
                     await this.fetchJobs();
                 }
@@ -29,6 +45,80 @@ function dashboard() {
                 if (this.user.account_type === 'worker') {
                     await this.loadWorkerData();
                 }
+            }
+        },
+
+        async fetchTasks() {
+            this.isLoadingTasks = true;
+            try {
+                const res = await fetch(`/api/tasks?user_id=${this.user.id}`);
+                if (res.ok) {
+                    this.tasks = await res.json();
+                }
+            } catch (e) {
+                console.error('Error fetching tasks:', e);
+            } finally {
+                this.isLoadingTasks = false;
+            }
+        },
+
+        openTaskModal() {
+            this.newTask = { title: '', due_date: '' };
+            this.showTaskModal = true;
+        },
+
+        async createTask() {
+            if (!this.newTask.title) {
+                alert('Title is required');
+                return;
+            }
+            try {
+                const res = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: this.user.id,
+                        ...this.newTask
+                    })
+                });
+                if (res.ok) {
+                    this.showTaskModal = false;
+                    this.fetchTasks();
+                } else {
+                    alert('Failed to create task');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        async toggleTaskStatus(task) {
+            const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+            try {
+                const res = await fetch(`/api/tasks/${task.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                if (res.ok) {
+                    task.status = newStatus;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        },
+
+        async deleteTask(taskId) {
+            if (!confirm('Are you sure?')) return;
+            try {
+                const res = await fetch(`/api/tasks/${taskId}`, {
+                    method: 'DELETE'
+                });
+                if (res.ok) {
+                    this.tasks = this.tasks.filter(t => t.id !== taskId);
+                }
+            } catch (e) {
+                console.error(e);
             }
         },
 
