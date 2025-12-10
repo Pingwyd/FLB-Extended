@@ -315,8 +315,147 @@
                     </div>
                 </template>
 
-                <!-- Worker Dashboard (Simplified for now) -->
-                <a href="/jobs" class="text-primary-600 hover:text-primary-500">Browse Jobs</a>
+                <!-- Worker Dashboard -->
+                <template x-if="user.account_type === 'worker'">
+                    <div class="space-y-8">
+                        <!-- Stats Row -->
+                        <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                            <!-- Jobs Completed -->
+                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
+                                        <i class="fas fa-check-circle text-white text-xl"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Jobs Completed</dt>
+                                            <dd class="text-2xl font-semibold text-gray-900 dark:text-white" x-text="workerStats.jobsCompleted"></dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Total Earnings -->
+                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
+                                        <i class="fas fa-wallet text-white text-xl"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Earnings</dt>
+                                            <dd class="text-2xl font-semibold text-gray-900 dark:text-white" x-text="'₦' + workerStats.totalEarnings.toLocaleString()"></dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Rating -->
+                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
+                                        <i class="fas fa-star text-white text-xl"></i>
+                                    </div>
+                                    <div class="ml-5 w-0 flex-1">
+                                        <dl>
+                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Rating</dt>
+                                            <dd class="flex items-baseline">
+                                                <span class="text-2xl font-semibold text-gray-900 dark:text-white" x-text="workerStats.rating"></span>
+                                                <span class="ml-1 text-sm text-gray-500">/ 5.0</span>
+                                            </dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Active Contracts (Left Column) -->
+                            <div class="lg:col-span-2 bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
+                                <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                                    <div>
+                                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Active Contracts</h3>
+                                        <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Your current ongoing jobs.</p>
+                                    </div>
+                                    <a href="/jobs" class="text-sm text-primary-600 hover:text-primary-500">Find More Work &rarr;</a>
+                                </div>
+                                <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                                    <template x-for="contract in contracts" :key="contract.id">
+                                        <li class="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                            <div class="flex items-center justify-between">
+                                                <div class="text-sm font-medium text-primary-600 truncate" x-text="contract.title"></div>
+                                                <div class="ml-2 flex-shrink-0 flex">
+                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                                        :class="{'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': contract.status === 'active', 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300': contract.status === 'pending'}"
+                                                        x-text="contract.status">
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2 sm:flex sm:justify-between">
+                                                <div class="sm:flex">
+                                                    <p class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                                        <i class="fas fa-user mr-1.5 text-gray-400"></i>
+                                                        Employer: <span x-text="contract.party_a_id"></span>
+                                                    </p>
+                                                </div>
+                                                <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
+                                                    <i class="fas fa-calendar mr-1.5 text-gray-400"></i>
+                                                    <p>Ends <span x-text="new Date(contract.end_date || Date.now()).toLocaleDateString()"></span></p>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    </template>
+                                    <li x-show="contracts.length === 0" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                                        No active contracts. <a href="/jobs" class="text-primary-600 hover:text-primary-500">Browse jobs</a> to get started.
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Upcoming Schedule (Right Column) -->
+                            <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden h-fit">
+                                <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
+                                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Upcoming Schedule</h3>
+                                    <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Your work for the next few days.</p>
+                                </div>
+                                <div class="p-4">
+                                    <div class="flow-root">
+                                        <ul class="-mb-8">
+                                            <template x-for="(event, index) in upcomingSchedule" :key="event.id">
+                                                <li>
+                                                    <div class="relative pb-8">
+                                                        <span x-show="index !== upcomingSchedule.length - 1" class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700" aria-hidden="true"></span>
+                                                        <div class="relative flex space-x-3">
+                                                            <div>
+                                                                <span class="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center ring-8 ring-white dark:ring-gray-800">
+                                                                    <i class="fas fa-calendar-day text-primary-600 dark:text-primary-400 text-xs"></i>
+                                                                </span>
+                                                            </div>
+                                                            <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
+                                                                <div>
+                                                                    <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="event.title"></p>
+                                                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                                                        <span x-text="event.location"></span>
+                                                                    </p>
+                                                                </div>
+                                                                <div class="text-right text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                                                                    <time x-text="new Date(event.date).toLocaleDateString(undefined, {month:'short', day:'numeric'})"></time>
+                                                                    <div class="text-xs mt-1" x-text="event.time"></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </li>
+                                            </template>
+                                            <li x-show="upcomingSchedule.length === 0" class="text-center py-4 text-gray-500 text-sm">
+                                                No upcoming work scheduled.
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
             </div>
         </div>
 </div>
@@ -344,65 +483,8 @@
 </main>
 </div>
 </div>
+{% endblock %}
 
-<script>
-    function dashboard() {
-        return {
-            user: JSON.parse(localStorage.getItem('flb_user') || '{}'),
-            contracts: [],
-            jobs: [],
-            listings: [],
-
-            async init() {
-                if (!localStorage.getItem('is_logged_in')) {
-                    window.location.href = '/login-page';
-                    return;
-                }
-
-                if (this.user.id) {
-                    await this.fetchContracts();
-                    if (this.user.account_type === 'farmer') {
-                        await this.fetchJobs();
-                    }
-                    if (this.user.account_type === 'realtor') {
-                        await this.fetchListings();
-                    }
-                }
-            },
-
-            async fetchContracts() {
-                try {
-                    const res = await fetch(`/api/my-contracts?user_id=${this.user.id}`);
-                    if (res.ok) {
-                        this.contracts = await res.json();
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
-            },
-
-            async fetchJobs() {
-                try {
-                    const res = await fetch(`/api/my-jobs?user_id=${this.user.id}`);
-                    if (res.ok) {
-                        this.jobs = await res.json();
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
-            },
-
-            async fetchListings() {
-                try {
-                    const res = await fetch(`/listings/user/${this.user.id}`);
-                    if (res.ok) {
-                        this.listings = await res.json();
-                    }
-                } catch (e) {
-                    console.error(e);
-                }
-            }
-        }
-    }
-</script>
+{% block scripts %}
+<script src="/static/js/dashboard.js"></script>
 {% endblock %}

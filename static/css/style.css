@@ -1,0 +1,216 @@
+[x-cloak] { display: none !important; }
+
+/* Global Input Styling */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+textarea,
+select {
+    border-radius: 0.5rem;
+    border: 1px solid #d1d5db;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none;
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+}
+
+/* Dark Mode Input Styling */
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark input[type="search"],
+.dark textarea,
+.dark select {
+    background-color: #374151; /* Gray-700 */
+    border-color: #4b5563; /* Gray-600 */
+    color: #f3f4f6; /* Gray-100 */
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+    border-color: #10b981; /* Primary-500 */
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.dark ::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #4b5563;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
+
+/* =========================================
+   Animations & Transitions
+   ========================================= */
+
+/* 1. Page Entrance Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+.page-enter {
+    animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.page-exit {
+    animation: fadeOut 0.3s ease-in forwards;
+}
+
+/* 2. Button Animations (Hover & Click) */
+/* Target buttons and button-like links */
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+a.btn,
+a[class*="bg-primary-"],
+a[class*="bg-green-"],
+a[class*="bg-red-"],
+a[class*="bg-blue-"],
+a[class*="bg-gray-800"], /* Dark mode buttons */
+a[class*="bg-white"][class*="shadow"] /* White buttons with shadow */
+{
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative;
+    overflow: hidden;
+    /* Stand out: Add a subtle border and shadow */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Specific styling for Primary/Green buttons to use colored shadows */
+a[class*="bg-primary-"],
+a[class*="bg-green-"],
+button[class*="bg-primary-"],
+button[class*="bg-green-"] {
+    box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39) !important;
+}
+
+/* Hover State: Lift up slightly */
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover,
+a.btn:hover,
+a[class*="bg-primary-"]:hover,
+a[class*="bg-green-"]:hover,
+a[class*="bg-red-"]:hover,
+a[class*="bg-blue-"]:hover,
+a[class*="bg-gray-800"]:hover,
+a[class*="bg-white"][class*="shadow"]:hover
+{
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+    /* Enhanced shadow on hover */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Enhanced hover for Primary/Green buttons */
+a[class*="bg-primary-"]:hover,
+a[class*="bg-green-"]:hover,
+button[class*="bg-primary-"]:hover,
+button[class*="bg-green-"]:hover {
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.23) !important;
+}
+
+/* Active/Click State: Press down */
+button:active,
+input[type="button"]:active,
+input[type="submit"]:active,
+input[type="reset"]:active,
+a.btn:active,
+a[class*="bg-primary-"]:active,
+a[class*="bg-green-"]:active,
+a[class*="bg-red-"]:active,
+a[class*="bg-blue-"]:active,
+a[class*="bg-gray-800"]:active,
+a[class*="bg-white"][class*="shadow"]:active
+{
+    transform: translateY(1px) scale(0.98);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    filter: brightness(0.95);
+}
+
+/* Ripple Effect (Optional, purely CSS based) */
+button::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.5);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(20, 20);
+        opacity: 0;
+    }
+}
+
+button:focus:not(:active)::after {
+    animation: ripple 1s ease-out;
+}
+
