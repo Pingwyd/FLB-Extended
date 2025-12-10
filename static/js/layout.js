@@ -60,4 +60,14 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = href;
         }, 300); // Match the 0.3s animation duration in style.css
     });
+
+    // Handle Back/Forward Cache (BFCache)
+    window.addEventListener('pageshow', (event) => {
+        if (event.persisted) {
+            if (mainContent) {
+                mainContent.classList.remove('page-exit');
+                mainContent.classList.add('page-enter');
+            }
+        }
+    });
 });

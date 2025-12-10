@@ -3,13 +3,18 @@
 {% block title %}Dashboard - FLB Extended{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-transparent" x-data="dashboard()">
-    <div class="relative bg-primary-800 pb-32">
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200" x-data="dashboard()">
+    <!-- Background Pattern -->
+    <div class="fixed inset-0 z-0 pointer-events-none opacity-40 dark:opacity-20" 
+         style="background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 24px 24px;">
+    </div>
+
+    <div class="relative bg-primary-800 pb-32 shadow-xl">
         <div class="absolute inset-0">
             <img class="w-full h-full object-cover"
                 src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80"
                 alt="Agriculture Background">
-            <div class="absolute inset-0 bg-primary-900 opacity-75 mix-blend-multiply" aria-hidden="true"></div>
+            <div class="absolute inset-0 bg-gradient-to-b from-primary-900/90 to-primary-800/95 mix-blend-multiply" aria-hidden="true"></div>
         </div>
         <header class="relative py-10 z-20">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center">
@@ -102,7 +107,7 @@
         </header>
     </div>
 
-    <main class="-mt-32 relative z-10">
+    <main class="relative z-10 -mt-24">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="px-4 py-8 sm:px-0">
 
@@ -321,49 +326,70 @@
                         <!-- Stats Row -->
                         <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
                             <!-- Jobs Completed -->
-                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 bg-green-500 rounded-md p-3">
-                                        <i class="fas fa-check-circle text-white text-xl"></i>
+                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transform hover:-translate-y-1 transition-all duration-300">
+                                <div class="p-5">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 bg-green-100 dark:bg-green-900/30 rounded-lg p-3">
+                                            <i class="fas fa-check-circle text-green-600 dark:text-green-400 text-xl"></i>
+                                        </div>
+                                        <div class="ml-5 w-0 flex-1">
+                                            <dl>
+                                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Jobs Completed</dt>
+                                                <dd class="text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="workerStats.jobsCompleted"></dd>
+                                            </dl>
+                                        </div>
                                     </div>
-                                    <div class="ml-5 w-0 flex-1">
-                                        <dl>
-                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Jobs Completed</dt>
-                                            <dd class="text-2xl font-semibold text-gray-900 dark:text-white" x-text="workerStats.jobsCompleted"></dd>
-                                        </dl>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-3 border-t border-gray-100 dark:border-gray-700">
+                                    <div class="text-sm">
+                                        <a href="/profile" class="font-medium text-green-600 hover:text-green-500 dark:text-green-400">View history <span aria-hidden="true">&rarr;</span></a>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Total Earnings -->
-                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 bg-yellow-500 rounded-md p-3">
-                                        <i class="fas fa-wallet text-white text-xl"></i>
+                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transform hover:-translate-y-1 transition-all duration-300">
+                                <div class="p-5">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg p-3">
+                                            <i class="fas fa-wallet text-yellow-600 dark:text-yellow-400 text-xl"></i>
+                                        </div>
+                                        <div class="ml-5 w-0 flex-1">
+                                            <dl>
+                                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Earnings</dt>
+                                                <dd class="text-3xl font-bold text-gray-900 dark:text-white mt-1" x-text="'₦' + workerStats.totalEarnings.toLocaleString()"></dd>
+                                            </dl>
+                                        </div>
                                     </div>
-                                    <div class="ml-5 w-0 flex-1">
-                                        <dl>
-                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Total Earnings</dt>
-                                            <dd class="text-2xl font-semibold text-gray-900 dark:text-white" x-text="'₦' + workerStats.totalEarnings.toLocaleString()"></dd>
-                                        </dl>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-3 border-t border-gray-100 dark:border-gray-700">
+                                    <div class="text-sm">
+                                        <a href="/wallet" class="font-medium text-yellow-600 hover:text-yellow-500 dark:text-yellow-400">View wallet <span aria-hidden="true">&rarr;</span></a>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Rating -->
-                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg p-5">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 bg-purple-500 rounded-md p-3">
-                                        <i class="fas fa-star text-white text-xl"></i>
+                            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 transform hover:-translate-y-1 transition-all duration-300">
+                                <div class="p-5">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 bg-purple-100 dark:bg-purple-900/30 rounded-lg p-3">
+                                            <i class="fas fa-star text-purple-600 dark:text-purple-400 text-xl"></i>
+                                        </div>
+                                        <div class="ml-5 w-0 flex-1">
+                                            <dl>
+                                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Rating</dt>
+                                                <dd class="flex items-baseline mt-1">
+                                                    <span class="text-3xl font-bold text-gray-900 dark:text-white" x-text="workerStats.rating"></span>
+                                                    <span class="ml-1 text-sm text-gray-500">/ 5.0</span>
+                                                </dd>
+                                            </dl>
+                                        </div>
                                     </div>
-                                    <div class="ml-5 w-0 flex-1">
-                                        <dl>
-                                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Rating</dt>
-                                            <dd class="flex items-baseline">
-                                                <span class="text-2xl font-semibold text-gray-900 dark:text-white" x-text="workerStats.rating"></span>
-                                                <span class="ml-1 text-sm text-gray-500">/ 5.0</span>
-                                            </dd>
-                                        </dl>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-3 border-t border-gray-100 dark:border-gray-700">
+                                    <div class="text-sm">
+                                        <a href="/profile" class="font-medium text-purple-600 hover:text-purple-500 dark:text-purple-400">View reviews <span aria-hidden="true">&rarr;</span></a>
                                     </div>
                                 </div>
                             </div>
@@ -371,83 +397,103 @@
 
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                             <!-- Active Contracts (Left Column) -->
-                            <div class="lg:col-span-2 bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden">
-                                <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                            <div class="lg:col-span-2 bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+                                <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
                                     <div>
-                                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Active Contracts</h3>
+                                        <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white">Active Contracts</h3>
                                         <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Your current ongoing jobs.</p>
                                     </div>
-                                    <a href="/jobs" class="text-sm text-primary-600 hover:text-primary-500">Find More Work &rarr;</a>
+                                    <a href="/jobs" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-primary-700 bg-primary-100 hover:bg-primary-200 dark:bg-primary-900/30 dark:text-primary-300 transition-colors">
+                                        Find More Work <i class="fas fa-arrow-right ml-1"></i>
+                                    </a>
                                 </div>
                                 <ul class="divide-y divide-gray-200 dark:divide-gray-700">
                                     <template x-for="contract in contracts" :key="contract.id">
-                                        <li class="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                        <li class="px-6 py-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                             <div class="flex items-center justify-between">
-                                                <div class="text-sm font-medium text-primary-600 truncate" x-text="contract.title"></div>
-                                                <div class="ml-2 flex-shrink-0 flex">
-                                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                                                        :class="{'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': contract.status === 'active', 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300': contract.status === 'pending'}"
+                                                <div class="flex items-center gap-3">
+                                                    <div class="h-10 w-10 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-600 dark:text-primary-400">
+                                                        <i class="fas fa-file-contract"></i>
+                                                    </div>
+                                                    <div>
+                                                        <div class="text-sm font-bold text-gray-900 dark:text-white" x-text="contract.title"></div>
+                                                        <div class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-0.5">
+                                                            <span><i class="fas fa-user mr-1"></i> <span x-text="contract.party_a_id"></span></span>
+                                                            <span>&bull;</span>
+                                                            <span><i class="fas fa-calendar mr-1"></i> Ends <span x-text="new Date(contract.end_date || Date.now()).toLocaleDateString()"></span></span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-shrink-0">
+                                                    <span class="px-2.5 py-0.5 inline-flex text-xs font-medium rounded-full"
+                                                        :class="{'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300': contract.status === 'active', 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': contract.status === 'pending'}"
                                                         x-text="contract.status">
                                                     </span>
                                                 </div>
                                             </div>
-                                            <div class="mt-2 sm:flex sm:justify-between">
-                                                <div class="sm:flex">
-                                                    <p class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                                        <i class="fas fa-user mr-1.5 text-gray-400"></i>
-                                                        Employer: <span x-text="contract.party_a_id"></span>
-                                                    </p>
-                                                </div>
-                                                <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
-                                                    <i class="fas fa-calendar mr-1.5 text-gray-400"></i>
-                                                    <p>Ends <span x-text="new Date(contract.end_date || Date.now()).toLocaleDateString()"></span></p>
-                                                </div>
-                                            </div>
                                         </li>
                                     </template>
-                                    <li x-show="contracts.length === 0" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                                        No active contracts. <a href="/jobs" class="text-primary-600 hover:text-primary-500">Browse jobs</a> to get started.
+                                    <li x-show="contracts.length === 0" class="px-6 py-12 text-center">
+                                        <div class="mx-auto h-12 w-12 text-gray-400">
+                                            <i class="fas fa-clipboard-list text-4xl"></i>
+                                        </div>
+                                        <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No active contracts</h3>
+                                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by browsing available jobs.</p>
+                                        <div class="mt-6">
+                                            <a href="/jobs" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                                                <i class="fas fa-search mr-2"></i> Browse Jobs
+                                            </a>
+                                        </div>
                                     </li>
                                 </ul>
                             </div>
 
-                            <!-- Upcoming Schedule (Right Column) -->
-                            <div class="bg-white dark:bg-gray-800 shadow rounded-lg overflow-hidden h-fit">
-                                <div class="px-4 py-5 sm:px-6 border-b border-gray-200 dark:border-gray-700">
-                                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">Upcoming Schedule</h3>
-                                    <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Your work for the next few days.</p>
+                            <!-- Recent Applications (Right Column) -->
+                            <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden h-fit">
+                                <div class="px-6 py-5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                                    <h3 class="text-lg leading-6 font-bold text-gray-900 dark:text-white">Recent Applications</h3>
+                                    <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">Jobs you've applied to recently.</p>
                                 </div>
-                                <div class="p-4">
+                                <div class="p-6">
                                     <div class="flow-root">
                                         <ul class="-mb-8">
-                                            <template x-for="(event, index) in upcomingSchedule" :key="event.id">
+                                            <template x-for="(app, index) in recentApplications" :key="app.id">
                                                 <li>
                                                     <div class="relative pb-8">
-                                                        <span x-show="index !== upcomingSchedule.length - 1" class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700" aria-hidden="true"></span>
+                                                        <span x-show="index !== recentApplications.length - 1" class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700" aria-hidden="true"></span>
                                                         <div class="relative flex space-x-3">
                                                             <div>
-                                                                <span class="h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900 flex items-center justify-center ring-8 ring-white dark:ring-gray-800">
-                                                                    <i class="fas fa-calendar-day text-primary-600 dark:text-primary-400 text-xs"></i>
+                                                                <span class="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center ring-8 ring-white dark:ring-gray-800">
+                                                                    <i class="fas fa-paper-plane text-blue-600 dark:text-blue-400 text-xs"></i>
                                                                 </span>
                                                             </div>
                                                             <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                                                                 <div>
-                                                                    <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="event.title"></p>
-                                                                    <p class="text-sm text-gray-500 dark:text-gray-400">
-                                                                        <span x-text="event.location"></span>
+                                                                    <p class="text-sm font-medium text-gray-900 dark:text-white" x-text="app.job_title"></p>
+                                                                    <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center mt-0.5">
+                                                                        <i class="fas fa-map-marker-alt mr-1 text-gray-400"></i> <span x-text="app.location"></span>
                                                                     </p>
                                                                 </div>
-                                                                <div class="text-right text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                                                                    <time x-text="new Date(event.date).toLocaleDateString(undefined, {month:'short', day:'numeric'})"></time>
-                                                                    <div class="text-xs mt-1" x-text="event.time"></div>
+                                                                <div class="text-right text-sm whitespace-nowrap">
+                                                                    <time class="text-gray-500 dark:text-gray-400 text-xs" x-text="new Date(app.date).toLocaleDateString(undefined, {month:'short', day:'numeric'})"></time>
+                                                                    <div class="text-xs mt-1 font-medium capitalize px-2 py-0.5 rounded-full inline-block" 
+                                                                         :class="{
+                                                                             'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300': app.status === 'pending', 
+                                                                             'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300': app.status === 'accepted', 
+                                                                             'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300': app.status === 'rejected'
+                                                                         }"
+                                                                         x-text="app.status"></div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </li>
                                             </template>
-                                            <li x-show="upcomingSchedule.length === 0" class="text-center py-4 text-gray-500 text-sm">
-                                                No upcoming work scheduled.
+                                            <li x-show="recentApplications.length === 0" class="text-center py-8">
+                                                <div class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-gray-100 dark:bg-gray-700 mb-3">
+                                                    <i class="fas fa-inbox text-gray-400"></i>
+                                                </div>
+                                                <p class="text-sm text-gray-500 dark:text-gray-400">No recent applications.</p>
                                             </li>
                                         </ul>
                                     </div>

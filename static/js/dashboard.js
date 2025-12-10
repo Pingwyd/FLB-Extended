@@ -10,7 +10,7 @@ function dashboard() {
             totalEarnings: 0,
             rating: 0
         },
-        upcomingSchedule: [],
+        recentApplications: [],
 
         async init() {
             if (!localStorage.getItem('is_logged_in')) {
@@ -27,24 +27,26 @@ function dashboard() {
                     await this.fetchListings();
                 }
                 if (this.user.account_type === 'worker') {
-                    this.loadWorkerData();
+                    await this.loadWorkerData();
                 }
             }
         },
 
-        loadWorkerData() {
-            // Mock data for worker dashboard
-            this.workerStats = {
-                jobsCompleted: 12,
-                totalEarnings: 450000,
-                rating: 4.8
-            };
-            
-            this.upcomingSchedule = [
-                { id: 1, title: 'Maize Harvesting', date: '2025-12-12', location: 'Kaduna Farm A', time: '08:00 AM' },
-                { id: 2, title: 'Fertilizer Application', date: '2025-12-15', location: 'Green Valley', time: '07:30 AM' },
-                { id: 3, title: 'Equipment Maintenance', date: '2025-12-18', location: 'Lagos Agro Hub', time: '09:00 AM' }
-            ];
+        async loadWorkerData() {
+            try {
+                const res = await fetch(`/api/worker-dashboard-stats?user_id=${this.user.id}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    this.workerStats = {
+                        jobsCompleted: data.jobsCompleted,
+                        totalEarnings: data.totalEarnings,
+                        rating: data.rating
+                    };
+                    this.recentApplications = data.recentApplications;
+                }
+            } catch (e) {
+                console.error('Error loading worker data:', e);
+            }
         },
 
         async fetchContracts() {

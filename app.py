@@ -4014,6 +4014,55 @@ def create_app():
         finally:
             session.close()
 
+    @app.route('/api/worker-dashboard-stats', methods=['GET'])
+    def get_worker_dashboard_stats():
+        if not db_available or session_local is None:
+            return jsonify({'error': 'database not available'}), 503
+        
+        user_id = request.args.get('user_id')
+        if not user_id:
+            return jsonify({'error': 'user_id required'}), 400
+            
+        session = session_local()
+        try:
+            # 1. Worker Profile Stats
+            worker_profile = session.query(worker_profile_model).filter_by(user_id=user_id).first()
+            jobs_completed = worker_profile.total_jobs if worker_profile else 0
+            rating = worker_profile.rating if worker_profile else 0.0
+            
+            # 2. Wallet Balance
+            wallet = session.query(wallet_model).filter_by(user_id=user_id).first()
+            total_earnings = wallet.balance if wallet else 0.0
+            
+            # 3. Recent Job Applications
+            recent_applications = session.query(job_application_model)\
+                .filter_by(applicant_id=user_id)\
+                .order_by(job_application_model.created_at.desc())\
+                .limit(5)\
+                .all()
+            
+            applications_data = []
+            for app in recent_applications:
+                job = session.query(job_model).get(app.job_id)
+                applications_data.append({
+                    'id': app.id,
+                    'job_title': job.title if job else 'Unknown Job',
+                    'status': app.status,
+                    'date': app.created_at.isoformat() if app.created_at else None,
+                    'location': job.location if job else ''
+                })
+
+            return jsonify({
+                'jobsCompleted': jobs_completed,
+                'totalEarnings': total_earnings,
+                'rating': rating,
+                'recentApplications': applications_data
+            })
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        finally:
+            session.close()
+
     return app
 
 if __name__ == '__main__':

@@ -1,10 +1,17 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="bg-gray-50 min-h-screen py-8" x-data="walletApp()">
+<div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-8" x-data="walletApp()">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Back Button -->
+        <div class="mb-4">
+            <button @click="window.history.back()" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none">
+                <i class="fas fa-arrow-left mr-2"></i> Back
+            </button>
+        </div>
+
         <!-- Balance Card -->
-        <div class="bg-white overflow-hidden shadow rounded-lg mb-8">
+        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg mb-8 border border-gray-200 dark:border-gray-700">
             <div class="p-5">
                 <div class="flex items-center">
                     <div class="flex-shrink-0 bg-primary-500 rounded-md p-3">
@@ -12,51 +19,162 @@
                     </div>
                     <div class="ml-5 w-0 flex-1">
                         <dl>
-                            <dt class="text-sm font-medium text-gray-500 truncate">Current Balance</dt>
+                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Current Balance</dt>
                             <dd>
-                                <div class="text-3xl font-bold text-gray-900" x-text="'₦' + balance.toLocaleString()"></div>
+                                <div class="text-3xl font-bold text-gray-900 dark:text-white" x-text="'₦' + balance.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})"></div>
                             </dd>
                         </dl>
                     </div>
                 </div>
             </div>
-            <div class="bg-gray-50 px-5 py-3">
+            <div class="bg-gray-50 dark:bg-gray-700/50 px-5 py-3 border-t border-gray-200 dark:border-gray-700">
                 <div class="text-sm flex space-x-4">
-                    <button class="font-medium text-primary-700 hover:text-primary-900">Deposit Funds</button>
-                    <button class="font-medium text-primary-700 hover:text-primary-900">Withdraw Funds</button>
+                    <button @click="showDepositModal = true" class="font-medium text-primary-700 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300">Deposit Funds</button>
+                    <button @click="showWithdrawModal = true" class="font-medium text-primary-700 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-300">Withdraw Funds</button>
                 </div>
             </div>
         </div>
 
         <!-- Transactions -->
-        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Transactions</h3>
+        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">Recent Transactions</h3>
         <div class="flex flex-col">
             <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                 <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-                    <div class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
+                    <div class="shadow overflow-hidden border-b border-gray-200 dark:border-gray-700 sm:rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Description</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Amount</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
                                 </tr>
                             </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
+                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 <template x-for="tx in transactions" :key="tx.id">
                                     <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" x-text="tx.date"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="tx.description"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" :class="tx.type === 'credit' ? 'text-green-600' : 'text-red-600'" x-text="(tx.type === 'credit' ? '+' : '-') + '₦' + tx.amount"></td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800" x-text="tx.status"></span>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" x-text="new Date(tx.created_at).toLocaleDateString()"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white" x-text="tx.description || tx.transaction_type"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" 
+                                            :class="tx.transaction_type === 'credit' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'" 
+                                            x-text="(tx.transaction_type === 'credit' ? '+' : '-') + '₦' + tx.amount.toLocaleString(undefined, {minimumFractionDigits: 2})"></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                                :class="{
+                                                    'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300': tx.status === 'success' || tx.status === 'completed',
+                                                    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300': tx.status === 'pending',
+                                                    'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300': tx.status === 'failed'
+                                                }" 
+                                                x-text="tx.status"></span>
                                         </td>
                                     </tr>
                                 </template>
+                                <tr x-show="transactions.length === 0">
+                                    <td colspan="4" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                                        No transactions found.
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div x-show="showDepositModal" class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="showDepositModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="showDepositModal = false"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div x-show="showDepositModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+                <div>
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900">
+                        <i class="fa-solid fa-plus text-green-600 dark:text-green-300"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-5">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">Deposit Funds</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                Enter the amount you want to add to your wallet.
+                            </p>
+                            <div class="mt-4">
+                                <label for="deposit-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 text-left">Amount (₦)</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">₦</span>
+                                    </div>
+                                    <input type="number" x-model="depositAmount" id="deposit-amount" class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md" placeholder="0.00">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                    <button type="button" @click="initiateDeposit()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:col-start-2 sm:text-sm">
+                        Proceed to Payment
+                    </button>
+                    <button type="button" @click="showDepositModal = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:col-start-1 sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Withdraw Modal -->
+    <div x-show="showWithdrawModal" class="fixed z-10 inset-0 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true" style="display: none;">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div x-show="showWithdrawModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" @click="showWithdrawModal = false"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div x-show="showWithdrawModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+                <div>
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900">
+                        <i class="fa-solid fa-minus text-red-600 dark:text-red-300"></i>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-5">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">Withdraw Funds</h3>
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                Withdraw funds to your bank account.
+                            </p>
+                            <div class="mt-4 space-y-4">
+                                <div>
+                                    <label for="withdraw-amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 text-left">Amount (₦)</label>
+                                    <div class="mt-1 relative rounded-md shadow-sm">
+                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <span class="text-gray-500 sm:text-sm">₦</span>
+                                        </div>
+                                        <input type="number" x-model="withdrawAmount" id="withdraw-amount" class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md" placeholder="0.00">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="bank-account" class="block text-sm font-medium text-gray-700 dark:text-gray-300 text-left">Bank Account</label>
+                                    <select id="bank-account" x-model="selectedBankId" class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                                        <option value="">Select a bank account</option>
+                                        <template x-for="account in bankAccounts" :key="account.id">
+                                            <option :value="account.id" x-text="account.bank_name + ' - ' + account.account_number"></option>
+                                        </template>
+                                    </select>
+                                    <p x-show="bankAccounts.length === 0" class="mt-1 text-xs text-red-500 text-left">
+                                        No bank accounts found. <a href="/settings?tab=payment" class="underline">Add one in settings</a>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-5 sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3 sm:grid-flow-row-dense">
+                    <button type="button" @click="initiateWithdraw()" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:col-start-2 sm:text-sm">
+                        Withdraw
+                    </button>
+                    <button type="button" @click="showWithdrawModal = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-600 shadow-sm px-4 py-2 bg-white dark:bg-gray-700 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 sm:mt-0 sm:col-start-1 sm:text-sm">
+                        Cancel
+                    </button>
                 </div>
             </div>
         </div>
@@ -66,11 +184,162 @@
 <script>
     function walletApp() {
         return {
-            balance: 150000,
-            transactions: [
-                { id: 1, date: '2023-11-20', description: 'Payment for Produce', amount: 50000, type: 'credit', status: 'Completed' },
-                { id: 2, date: '2023-11-18', description: 'Withdrawal', amount: 20000, type: 'debit', status: 'Completed' }
-            ]
+            user: JSON.parse(localStorage.getItem('flb_user') || '{}'),
+            balance: 0,
+            transactions: [],
+            bankAccounts: [],
+            
+            // Modal states
+            showDepositModal: false,
+            showWithdrawModal: false,
+            
+            // Form data
+            depositAmount: '',
+            withdrawAmount: '',
+            selectedBankId: '',
+
+            async init() {
+                if (!this.user.id) {
+                    window.location.href = '/login-page';
+                    return;
+                }
+                await this.fetchBalance();
+                await this.fetchTransactions();
+                await this.fetchBankAccounts();
+            },
+
+            async fetchBalance() {
+                try {
+                    const res = await fetch(`/api/wallet/balance/${this.user.id}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        this.balance = data.balance;
+                    }
+                } catch (e) {
+                    console.error('Error fetching balance:', e);
+                }
+            },
+
+            async fetchTransactions() {
+                try {
+                    const res = await fetch(`/api/wallet/transactions/${this.user.id}`);
+                    if (res.ok) {
+                        this.transactions = await res.json();
+                    }
+                } catch (e) {
+                    console.error('Error fetching transactions:', e);
+                }
+            },
+
+            async fetchBankAccounts() {
+                try {
+                    const res = await fetch(`/api/bank-accounts/${this.user.id}`);
+                    if (res.ok) {
+                        this.bankAccounts = await res.json();
+                    }
+                } catch (e) {
+                    console.error('Error fetching bank accounts:', e);
+                }
+            },
+
+            async initiateDeposit() {
+                if (!this.depositAmount || this.depositAmount <= 0) {
+                    alert('Please enter a valid amount');
+                    return;
+                }
+
+                try {
+                    const res = await fetch('/api/wallet/fund', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_id: this.user.id,
+                            amount: this.depositAmount,
+                            email: this.user.email,
+                            name: this.user.full_name
+                        })
+                    });
+
+                    const data = await res.json();
+                    
+                    if (res.ok) {
+                        // Create and submit form for Interswitch
+                        this.submitPaymentForm(data);
+                    } else {
+                        alert(data.error || 'Failed to initiate deposit');
+                    }
+                } catch (e) {
+                    console.error('Error initiating deposit:', e);
+                    alert('An error occurred');
+                }
+            },
+
+            submitPaymentForm(data) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = data.payment_url;
+
+                const fields = {
+                    'merchant_code': data.merchant_code,
+                    'pay_item_id': data.pay_item_id,
+                    'txn_ref': data.txn_ref,
+                    'amount': data.amount,
+                    'currency': data.currency,
+                    'cust_name': data.cust_name,
+                    'cust_email': data.cust_email,
+                    'site_redirect_url': data.site_redirect_url
+                };
+
+                for (const key in fields) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = fields[key];
+                    form.appendChild(input);
+                }
+
+                document.body.appendChild(form);
+                form.submit();
+            },
+
+            async initiateWithdraw() {
+                if (!this.withdrawAmount || this.withdrawAmount <= 0) {
+                    alert('Please enter a valid amount');
+                    return;
+                }
+                if (!this.selectedBankId) {
+                    alert('Please select a bank account');
+                    return;
+                }
+
+                try {
+                    const res = await fetch('/api/wallet/withdraw', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            user_id: this.user.id,
+                            amount: this.withdrawAmount,
+                            bank_account_id: this.selectedBankId
+                        })
+                    });
+
+                    const data = await res.json();
+                    
+                    if (res.ok) {
+                        alert('Withdrawal request submitted successfully');
+                        this.showWithdrawModal = false;
+                        this.withdrawAmount = '';
+                        this.selectedBankId = '';
+                        await this.fetchBalance();
+                        await this.fetchTransactions();
+                    } else {
+                        alert(data.error || 'Failed to withdraw funds');
+                    }
+                } catch (e) {
+                    console.error('Error withdrawing funds:', e);
+                    alert('An error occurred');
+                }
+            }
         }
     }
 </script>
