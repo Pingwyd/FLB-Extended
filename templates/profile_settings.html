@@ -465,7 +465,8 @@
             verification: {
                 type: '',
                 number: '',
-                fileName: ''
+                fileName: '',
+                file: null
             },
             workerProfile: {
                 isAvailable: true,
@@ -583,6 +584,7 @@
                 const file = event.target.files[0];
                 if (file) {
                     this.verification.fileName = file.name;
+                    this.verification.file = file;
                 }
             },
 
@@ -614,9 +616,41 @@
                 }
             },
 
-            submitVerification() {
-                alert('Verification documents submitted successfully! We will review them shortly.');
-                this.verification = { type: '', number: '', fileName: '' };
+            async submitVerification() {
+                if (!this.verification.type || !this.verification.number) {
+                    alert('Please select a document type and enter the document number.');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('user_id', this.user.id);
+                formData.append('document_type', this.verification.type);
+                formData.append('document_number', this.verification.number);
+                
+                if (this.verification.file) {
+                    formData.append('document', this.verification.file);
+                }
+
+                try {
+                    const response = await fetch('/documents/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        alert('Verification documents submitted successfully! We will review them shortly.');
+                        this.verification = { type: '', number: '', fileName: '', file: null };
+                        // Reset file input
+                        const fileInput = document.getElementById('file-upload');
+                        if (fileInput) fileInput.value = '';
+                    } else {
+                        const error = await response.json();
+                        alert('Failed to submit verification: ' + (error.error || 'Unknown error'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while submitting verification.');
+                }
             },
 
             addSkill() {

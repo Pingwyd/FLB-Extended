@@ -11,27 +11,83 @@
                 <h3 class="text-lg leading-6 font-medium text-white">Registered Users</h3>
                 <p class="mt-1 max-w-2xl text-sm text-gray-400">Manage user accounts and permissions.</p>
             </div>
-            <button @click="fetchUsers()" class="text-primary-500 hover:text-primary-400">
+            <button @click="fetchUsers()" class="text-blue-400 hover:text-blue-300 transition-colors">
                 <i class="fas fa-sync-alt"></i> Refresh
             </button>
+        </div>
+        <!-- Verify Modal -->
+        <div x-show="showVerifyModal" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="fixed inset-0 bg-black bg-opacity-50" @click="closeVerifyModal()"></div>
+            <div class="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full mx-auto overflow-hidden shadow-lg z-50">
+                <div class="p-4 border-b flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900">Verify Documents for <span x-text="selectedUser.full_name"></span></h3>
+                    <button @click="closeVerifyModal()" class="text-gray-500">Close</button>
+                </div>
+                <div class="p-4 space-y-4 text-black">
+                    <template x-if="modalDocs.length === 0">
+                        <div class="text-sm text-gray-600">No documents found for this user.</div>
+                    </template>
+                    <template x-for="doc in modalDocs" :key="doc.id">
+                        <div class="p-2 border rounded flex gap-4 items-start">
+                            <div class="w-28 h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
+                                <template x-if="isImage(doc.document_path)">
+                                    <img :src="doc.document_path" class="object-contain w-full h-full" />
+                                </template>
+                                <template x-if="!isImage(doc.document_path)">
+                                    <iframe :src="doc.document_path" class="w-full h-20"></iframe>
+                                </template>
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-sm font-medium" x-text="doc.document_type"></div>
+                                <div class="text-xs text-gray-600">Uploaded: <span x-text="formatDate(doc.created_at || doc.created)"></span></div>
+                                <div class="mt-2 text-sm text-gray-700" x-text="doc.document_number || ''"></div>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <button @click="selectDoc(doc)" :class="selectedDocId === doc.id ? 'bg-blue-600 text-white' : 'bg-gray-200'" class="px-3 py-1 rounded text-sm">Select</button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div class="pt-2">
+                        <label class="block text-sm text-gray-700">Admin notes (optional)</label>
+                        <textarea x-model="modalNotes" class="w-full mt-1 p-2 border rounded" rows="3"></textarea>
+                    </div>
+
+                    <div class="flex justify-end gap-2">
+                        <button @click="approveSelectedDoc()" class="px-4 py-2 bg-green-600 text-white rounded">Approve</button>
+                        <button @click="rejectSelectedDoc()" class="px-4 py-2 bg-red-600 text-white rounded">Reject</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Verifications anchor & quick filter -->
+        <div id="verifications" class="px-4 py-3 sm:px-6 bg-gray-900 border-b border-gray-700 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <h4 class="text-sm font-medium text-gray-200">Verification Controls</h4>
+                <p class="text-xs text-gray-400">Jump here to review pending verification requests.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button @click="filterMode = 'all'" :class="filterMode === 'all' ? 'bg-gray-700 text-white' : 'bg-transparent text-gray-300'" class="px-3 py-1 rounded text-sm border border-gray-700">Show All</button>
+                <button @click="filterMode = 'pending'" :class="filterMode === 'pending' ? 'bg-yellow-600 text-white' : 'bg-transparent text-gray-300'" class="px-3 py-1 rounded text-sm border border-gray-700">Show Pending Verifications</button>
+            </div>
         </div>
         <div class="border-t border-gray-700">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-700">
-                    <thead class="bg-gray-700">
+                    <thead class="bg-gray-900">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">User</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Role</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Joined</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">User</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Role</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Joined</th>
                             <th scope="col" class="relative px-6 py-3">
                                 <span class="sr-only">Actions</span>
                             </th>
                         </tr>
                     </thead>
                     <tbody class="bg-gray-800 divide-y divide-gray-700">
-                        <template x-for="user in users" :key="user.id">
-                            <tr>
+                        <template x-for="user in filteredUsers()" :key="user.id">
+                            <tr @mouseenter="prefetchPreview(user, $event)" @mouseleave="hidePreview()">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
@@ -62,15 +118,44 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400" x-text="formatDate(user.created_at)"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button @click="toggleBan(user)" 
-                                            class="text-red-400 hover:text-red-300 ml-4"
-                                            x-text="user.is_banned ? 'Unban' : 'Ban'">
-                                    </button>
+                                    <div class="flex items-center justify-end gap-3">
+                                        <template x-if="isPending(user)">
+                                            <button @click="verifyUser(user)" class="px-2 py-1 bg-green-600 text-white rounded text-sm">Verify</button>
+                                        </template>
+                                        <button @click="toggleBan(user)" 
+                                                class="text-red-400 hover:text-red-300 ml-4 transition-colors"
+                                                x-text="user.is_banned ? 'Unban' : 'Ban'">
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </template>
                     </tbody>
                 </table>
+                <!-- Hover preview panel (floating) -->
+                <div x-show="previewVisible" x-cloak x-transition class="fixed z-50 w-64 bg-white dark:bg-gray-800 rounded shadow-lg border" :style="previewStyle">
+                    <div class="p-2 text-sm text-gray-800 dark:text-gray-200">
+                        <div class="font-medium mb-1" x-text="previewTitle"></div>
+                        <div class="h-36 bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
+                            <template x-if="previewSelectedDoc && isImage(previewSelectedDoc.document_path)">
+                                <img :src="previewSelectedDoc.document_path" class="object-contain w-full h-full" />
+                            </template>
+                            <template x-if="previewSelectedDoc && !isImage(previewSelectedDoc.document_path)">
+                                <iframe :src="previewSelectedDoc.document_path + (previewPage ? '#page=' + previewPage : '')" class="w-full h-36"></iframe>
+                            </template>
+                            <template x-if="!previewSelectedDoc">
+                                <div class="text-xs text-gray-500">No preview available</div>
+                            </template>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between">
+                            <div class="text-xs text-gray-500">Page <span x-text="previewPage"></span></div>
+                            <div class="flex gap-1">
+                                <button @click="previewPrevPage()" class="px-2 py-1 text-xs bg-gray-200 rounded">Prev</button>
+                                <button @click="previewNextPage()" class="px-2 py-1 text-xs bg-gray-200 rounded">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -82,12 +167,25 @@ function userManagement() {
         users: [],
         currentUser: JSON.parse(localStorage.getItem('flb_user') || '{}'),
 
-        init() {
+        async init() {
             if (!['admin', 'super_admin'].includes(this.currentUser.account_type)) {
                 window.location.href = '/dashboard';
                 return;
             }
-            this.fetchUsers();
+            await this.fetchUsers();
+
+            // If the page was opened with #verifications, show pending filter and scroll into view
+            try {
+                if (window.location.hash === '#verifications') {
+                    this.filterMode = 'pending';
+                    setTimeout(() => {
+                        const el = document.getElementById('verifications');
+                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 80);
+                }
+            } catch (e) {
+                // ignore
+            }
         },
 
         async fetchUsers() {
@@ -108,6 +206,26 @@ function userManagement() {
             } catch (error) {
                 console.error('Error:', error);
             }
+        },
+
+        // Filter helpers for verification workflow
+        filterMode: 'all',
+
+        isPending(user) {
+            // Support various possible backend fields used for verification status
+            return (
+                (user.verification_status && user.verification_status === 'pending') ||
+                (typeof user.is_verified !== 'undefined' && user.is_verified === false) ||
+                user.pending_verification === true ||
+                user.needs_verification === true
+            );
+        },
+
+        filteredUsers() {
+            if (this.filterMode === 'pending') {
+                return this.users.filter(u => this.isPending(u));
+            }
+            return this.users;
         },
 
         async toggleBan(user) {
@@ -136,6 +254,167 @@ function userManagement() {
                 console.error('Error:', error);
             }
         },
+
+        async verifyUser(user) {
+                // Open verification modal to inspect documents before approving
+                try {
+                    this.selectedUser = user;
+                    this.modalNotes = '';
+                    this.selectedDocId = null;
+                    this.showVerifyModal = true;
+                    // fetch documents for the user
+                    const res = await fetch(`/documents/${user.id}?admin_id=${this.currentUser.id}`);
+                    if (res.ok) {
+                        this.modalDocs = await res.json();
+                        if (this.modalDocs.length > 0) this.selectedDocId = this.modalDocs[0].id;
+                    } else {
+                        console.error('Failed to fetch user documents');
+                        this.modalDocs = [];
+                    }
+                } catch (e) {
+                    console.error('Error opening verify modal', e);
+                    alert('Error opening verify modal: ' + e);
+                }
+        },
+
+            // Modal state and helpers
+            showVerifyModal: false,
+            modalDocs: [],
+            selectedDocId: null,
+            modalNotes: '',
+            selectedUser: null,
+
+            // Hover preview cache/state
+            previewCache: {}, // user_id -> docs
+            previewDocs: [],
+            previewVisible: false,
+            previewSelectedDoc: null,
+            previewPage: 1,
+            previewTitle: '',
+            previewStyle: '',
+
+            isImage(path) {
+                if (!path) return false;
+                return /\.(jpg|jpeg|png|gif|webp)$/i.test(path);
+            },
+
+            selectDoc(doc) {
+                this.selectedDocId = doc.id;
+            },
+
+            async prefetchPreview(user, ev) {
+                try {
+                    // position the preview near cursor
+                    const x = (ev.clientX || 100) + 12;
+                    const y = (ev.clientY || 100) + 12;
+                    this.previewStyle = `left: ${x}px; top: ${y}px;`;
+                    this.previewTitle = user.full_name || user.email || 'User Documents';
+
+                    if (this.previewCache[user.id]) {
+                        this.previewDocs = this.previewCache[user.id];
+                        this.previewSelectedDoc = this.previewDocs.length ? this.previewDocs[0] : null;
+                        this.previewPage = 1;
+                        this.previewVisible = true;
+                        return;
+                    }
+
+                    const res = await fetch(`/documents/${user.id}?admin_id=${this.currentUser.id}`);
+                    if (res.ok) {
+                        const docs = await res.json();
+                        this.previewCache[user.id] = docs;
+                        this.previewDocs = docs;
+                        this.previewSelectedDoc = docs.length ? docs[0] : null;
+                        this.previewPage = 1;
+                        this.previewVisible = true;
+                    } else {
+                        this.previewDocs = [];
+                        this.previewSelectedDoc = null;
+                        this.previewVisible = true;
+                    }
+                } catch (e) {
+                    console.error('preview fetch error', e);
+                }
+            },
+
+            hidePreview() {
+                // small delay to allow clicks on preview controls; but here we'll immediately hide
+                this.previewVisible = false;
+                this.previewSelectedDoc = null;
+                this.previewPage = 1;
+            },
+
+            previewNextPage() {
+                this.previewPage = (this.previewPage || 1) + 1;
+            },
+
+            previewPrevPage() {
+                if (!this.previewPage || this.previewPage <= 1) return;
+                this.previewPage = this.previewPage - 1;
+            },
+
+            closeVerifyModal() {
+                this.showVerifyModal = false;
+                this.modalDocs = [];
+                this.selectedDocId = null;
+                this.modalNotes = '';
+                this.selectedUser = null;
+            },
+
+            async approveSelectedDoc() {
+                if (!this.selectedDocId) return alert('Please select a document to approve');
+                if (!confirm('Approve selected document?')) return;
+                try {
+                    const res = await fetch(`/documents/verify/${this.selectedDocId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ admin_id: this.currentUser.id, status: 'approved', admin_notes: this.modalNotes })
+                    });
+                    if (res.ok) {
+                        alert('Document approved');
+                        this.closeVerifyModal();
+                        await this.fetchUsers();
+                    } else if (res.status === 409) {
+                        const data = await res.json();
+                        alert('Conflict: ' + (data.error || 'Document already processed'));
+                        this.closeVerifyModal();
+                        await this.fetchUsers();
+                    } else {
+                        const data = await res.json();
+                        alert('Failed to approve: ' + (data.error || res.statusText));
+                    }
+                } catch (e) {
+                    console.error('approve error', e);
+                    alert('Error approving document: ' + e);
+                }
+            },
+
+            async rejectSelectedDoc() {
+                if (!this.selectedDocId) return alert('Please select a document to reject');
+                if (!confirm('Reject selected document?')) return;
+                try {
+                    const res = await fetch(`/documents/verify/${this.selectedDocId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ admin_id: this.currentUser.id, status: 'rejected', admin_notes: this.modalNotes })
+                    });
+                    if (res.ok) {
+                        alert('Document rejected');
+                        this.closeVerifyModal();
+                        await this.fetchUsers();
+                    } else if (res.status === 409) {
+                        const data = await res.json();
+                        alert('Conflict: ' + (data.error || 'Document already processed'));
+                        this.closeVerifyModal();
+                        await this.fetchUsers();
+                    } else {
+                        const data = await res.json();
+                        alert('Failed to reject: ' + (data.error || res.statusText));
+                    }
+                } catch (e) {
+                    console.error('reject error', e);
+                    alert('Error rejecting document: ' + e);
+                }
+            },
 
         formatDate(dateString) {
             if (!dateString) return '';

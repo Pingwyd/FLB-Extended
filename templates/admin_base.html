@@ -33,71 +33,107 @@
 </head>
 <body class="font-sans text-gray-100 bg-gray-900" x-data="adminDashboard()">
 
-    <!-- Top Navigation -->
-    <nav class="bg-gray-900 border-b border-gray-800">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <a href="/admin/dashboard" class="flex items-center gap-2">
-                            <i class="fa-solid fa-leaf text-white text-2xl"></i>
-                            <span class="font-bold text-xl tracking-tight text-white">FLB<span class="text-gray-400">Extended</span></span>
-                        </a>
-                    </div>
-                    <div class="hidden md:block">
-                        <div class="ml-10 flex items-baseline space-x-4">
-                            <a href="/admin/dashboard" class="{% if request.path == '/admin/dashboard' %}bg-gray-800 text-white{% else %}text-gray-300 hover:bg-gray-700 hover:text-white{% endif %} px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
-                            <a href="/jobs" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Jobs</a>
-                            <a href="/workers-directory" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Workers</a>
-                            <a href="/marketplace" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Marketplace</a>
-                            <a href="/forum" class="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium">Forum</a>
-                        </div>
-                    </div>
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-gray-900 border-r border-gray-800 flex flex-col">
+            <!-- Logo -->
+            <div class="h-16 flex items-center px-6 border-b border-gray-800">
+                <i class="fa-solid fa-leaf text-white text-xl mr-2"></i>
+                <span class="font-bold text-lg text-white">FLBAdmin</span>
+            </div>
+
+        <!-- Notifications Modal (Alpine controlled) -->
+        <div x-show="showNotifications" x-cloak class="fixed inset-0 z-50 flex items-start justify-center p-4">
+            <div class="fixed inset-0 bg-black bg-opacity-50" @click="showNotifications = false"></div>
+            <div class="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full mx-auto overflow-hidden shadow-lg z-50">
+                <div class="p-4 flex justify-between items-center border-b border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Notifications</h3>
+                    <button @click="showNotifications = false" class="text-gray-500 hover:text-gray-700">Close</button>
                 </div>
-                <div class="hidden md:block">
-                    <div class="ml-4 flex items-center md:ml-6">
-                        <!-- Profile Dropdown -->
-                        <div class="ml-3 relative" x-data="{ open: false }">
-                            <div>
-                                <button @click="open = !open" type="button" class="max-w-xs bg-gray-800 rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
-                                    <span class="sr-only">Open user menu</span>
-                                    <div class="h-8 w-8 rounded-full bg-gray-700 flex items-center justify-center text-white">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <span class="ml-3 text-gray-300 text-sm font-medium mr-2" x-text="currentUser.full_name || 'Admin'"></span>
-                                </button>
+                <div class="p-4 max-h-80 overflow-y-auto">
+                    <template x-for="item in recentActivity" :key="item.id">
+                        <div class="py-2 border-b border-gray-100 dark:border-gray-700">
+                            <div class="flex justify-between">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white" x-text="item.action"></div>
+                                <div class="text-xs text-gray-500" x-text="formatDate(item.created_at)"></div>
                             </div>
-                            <div x-show="open" @click.away="open = false" class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1" style="display: none;">
-                                <a href="/profile/settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="user-menu-item-0">Your Profile</a>
-                                <a href="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="user-menu-item-2">Sign out</a>
-                            </div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400" x-text="item.details || item.target_type"></div>
                         </div>
-                    </div>
+                    </template>
+                    <div x-show="recentActivity.length === 0" class="text-center text-sm text-gray-500">No notifications.</div>
                 </div>
             </div>
         </div>
-    </nav>
+            
+            <!-- Nav Links -->
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <a href="/admin/dashboard" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors {% if request.path == '/admin/dashboard' %}bg-gray-800 text-white{% endif %}">
+                    <i class="fas fa-chart-line w-5 mr-3"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="/admin/users-page" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors {% if 'users' in request.path %}bg-gray-800 text-white{% endif %}">
+                    <i class="fas fa-users w-5 mr-3"></i>
+                    <span>User Management</span>
+                </a>
+                <a href="/admin/moderation-page" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors {% if 'moderation' in request.path %}bg-gray-800 text-white{% endif %}">
+                    <i class="fas fa-shield-alt w-5 mr-3"></i>
+                    <span>Moderation</span>
+                </a>
+                <a x-cloak x-show="['admin','super_admin','moderator'].includes(user.account_type)" href="/admin/verifications" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors {% if 'verifications' in request.path %}bg-gray-800 text-white{% endif %}">
+                    <i class="fas fa-user-check w-5 mr-3"></i>
+                    <span>Verify Users</span>
+                </a>
+                <a x-cloak x-show="['admin','super_admin'].includes(user.account_type)" href="/admin/audit-logs" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors {% if 'audit-logs' in request.path %}bg-gray-800 text-white{% endif %}">
+                    <i class="fas fa-history w-5 mr-3"></i>
+                    <span>Audit Logs</span>
+                </a>
+                <a href="/admin/settings" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors {% if 'settings' in request.path %}bg-gray-800 text-white{% endif %}">
+                    <i class="fas fa-cog w-5 mr-3"></i>
+                    <span>Settings</span>
+                </a>
+                <a href="/admin/health" class="flex items-center px-4 py-3 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors {% if 'health' in request.path %}bg-gray-800 text-white{% endif %}">
+                    <i class="fas fa-heartbeat w-5 mr-3"></i>
+                    <span>System Health</span>
+                </a>
+            </nav>
 
-    <!-- Page Header -->
-    <header class="bg-gray-900 shadow">
-        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 class="text-3xl font-bold text-white">
-                {% block header_title %}Dashboard{% endblock %}
-            </h1>
-            {% if request.path != '/admin/dashboard' %}
-            <a href="/admin/dashboard" class="text-gray-400 hover:text-white text-sm font-medium">
-                Back to Dashboard
-            </a>
-            {% endif %}
+            <!-- User Profile (Bottom) -->
+            <div class="p-4 border-t border-gray-800">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-400">
+                        <span class="font-bold" x-text="(user.full_name || 'SA').substring(0, 2).toUpperCase()">SA</span>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-white" x-text="user.full_name || 'Super Admin'"></p>
+                        <p class="text-xs text-gray-500" x-text="user.account_type || 'Super Admin'"></p>
+                    </div>
+                </div>
+                <a href="/logout" class="block w-full py-2 px-4 bg-red-600 hover:bg-red-700 text-white text-center rounded-lg text-sm font-medium transition-colors">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <div class="flex-1 flex flex-col overflow-hidden bg-gray-900">
+            <!-- Header -->
+            <header class="h-16 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-8">
+                <h1 class="text-xl font-semibold text-white">
+                    {% block header_title %}Dashboard Overview{% endblock %}
+                </h1>
+                <div class="flex items-center gap-4">
+                    <button @click="toggleNotifications()" class="text-gray-400 hover:text-white relative" title="View notifications">
+                        <i class="fas fa-bell"></i>
+                        <span x-show="unreadCount > 0" x-cloak class="absolute top-0 right-0 flex items-center justify-center h-5 min-w-5 rounded-full bg-red-500 text-xs text-white px-1" x-text="unreadCount"></span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Scrollable Area -->
+            <main class="flex-1 overflow-y-auto p-8">
+                {% block content %}{% endblock %}
+            </main>
         </div>
-    </header>
-
-    <!-- Main Content -->
-    <main>
-        <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-            {% block content %}{% endblock %}
-        </div>
-    </main>
-
+    </div>
 </body>
 </html>

@@ -14,18 +14,18 @@
             <dl class="sm:divide-y sm:divide-gray-700">
                 <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt class="text-sm font-medium text-gray-400">Platform Fee (%)</dt>
-                    <dd class="mt-1 text-sm text-white sm:mt-0 sm:col-span-2 flex items-center">
-                        <input type="number" x-model="settings.platform_fee" class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-600 bg-gray-700 text-white rounded-md max-w-xs mr-4">
-                        <button @click="updateSetting('platform_fee')" class="text-primary-500 hover:text-primary-400">Save</button>
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 flex items-center">
+                        <input type="number" x-model="settings.platform_fee" class="bg-gray-700 text-white shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-600 rounded-md max-w-xs mr-4">
+                        <button @click="updateSetting('platform_fee')" class="text-blue-400 hover:text-blue-300 transition-colors">Save</button>
                     </dd>
                 </div>
                 <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt class="text-sm font-medium text-gray-400">Maintenance Mode</dt>
-                    <dd class="mt-1 text-sm text-white sm:mt-0 sm:col-span-2 flex items-center">
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 flex items-center">
                         <button type="button" 
                                 @click="toggleMaintenance()"
-                                :class="settings.maintenance_mode ? 'bg-primary-600' : 'bg-gray-600'"
-                                class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500" 
+                                :class="settings.maintenance_mode ? 'bg-blue-600' : 'bg-gray-600'"
+                                class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" 
                                 role="switch" 
                                 aria-checked="false">
                             <span class="sr-only">Use setting</span>
@@ -38,11 +38,11 @@
                 </div>
                 <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                     <dt class="text-sm font-medium text-gray-400">Allow New Registrations</dt>
-                    <dd class="mt-1 text-sm text-white sm:mt-0 sm:col-span-2 flex items-center">
+                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2 flex items-center">
                         <button type="button" 
                                 @click="toggleRegistrations()"
-                                :class="settings.allow_registrations ? 'bg-primary-600' : 'bg-gray-600'"
-                                class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500" 
+                                :class="settings.allow_registrations ? 'bg-blue-600' : 'bg-gray-600'"
+                                class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" 
                                 role="switch" 
                                 aria-checked="false">
                             <span class="sr-only">Use setting</span>

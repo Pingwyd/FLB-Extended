@@ -8,7 +8,12 @@ import logging
 import requests
 import uuid
 import re
-from flask import Flask, request, jsonify, send_from_directory, render_template, redirect, url_for
+import time
+import shutil
+import json
+import csv
+import io
+from flask import Flask, request, jsonify, send_from_directory, render_template, redirect, url_for, Response
 import config
 import datetime
 from flask_limiter import Limiter
@@ -22,6 +27,28 @@ from flask_swagger_ui import get_swaggerui_blueprint
 
 def create_app():
     app = Flask(__name__)
+    # record process start time for uptime reporting
+    app.start_time = time.time()
+    # Ensure data directory and health history persistence exist on startup
+    try:
+        DATA_DIR_STARTUP = os.path.join(config.BASE_DIR, 'data')
+        os.makedirs(DATA_DIR_STARTUP, exist_ok=True)
+        history_path_startup = os.path.join(DATA_DIR_STARTUP, 'health_history.json')
+        # If no history exists but a seed file is present, copy it; otherwise create an empty list
+        if not os.path.exists(history_path_startup):
+            seed_path = os.path.join(config.BASE_DIR, 'data', 'health_history_seed.json')
+            if os.path.exists(seed_path):
+                try:
+                    shutil.copy(seed_path, history_path_startup)
+                except Exception:
+                    with open(history_path_startup, 'w', encoding='utf-8') as hf:
+                        json.dump([], hf)
+            else:
+                with open(history_path_startup, 'w', encoding='utf-8') as hf:
+                    json.dump([], hf)
+    except Exception:
+        # Non-fatal: continue even if data dir bootstrap fails
+        pass
     
     # Enable CORS
     CORS(app, resources={r"/*": {"origins": "*"}})
@@ -63,7 +90,7 @@ def create_app():
     limiter = Limiter(
         get_remote_address,
         app=app,
-        default_limits=["200 per day", "50 per hour"],
+        default_limits=["200 per day", "100 per hour"],
         storage_uri=os.environ.get('RATELIMIT_STORAGE_URI', 'memory://')
     )
 
@@ -288,6 +315,57 @@ def create_app():
         finally:
             session.close()
 
+    def record_admin_action(action, target_type='admin_page', target_id=None):
+        """Try to extract an admin_id from the request and write an audit log entry."""
+        admin_id = None
+        try:
+            if request.is_json:
+                admin_id = request.json.get('admin_id')
+        except Exception:
+            pass
+        if not admin_id:
+            admin_id = request.args.get('admin_id')
+        # fallback to flask session if present
+        try:
+            from flask import session as flask_session
+            if not admin_id and flask_session is not None:
+                admin_id = flask_session.get('user_id')
+        except Exception:
+            pass
+
+        if admin_id:
+            try:
+                log_admin_action(admin_id=admin_id, action=action, target_type=target_type, target_id=target_id)
+            except Exception:
+                pass
+
+    @app.route('/api/admin/verifications', methods=['GET'])
+    @require_admin
+    def api_admin_verifications():
+        """Return pending verification documents grouped with user info for admin UI"""
+        if not db_available or session_local is None or verification_doc_model is None:
+            return jsonify({'error': 'database not available'}), 503
+
+        session = session_local()
+        try:
+            pending_docs = session.query(verification_doc_model).filter_by(status='pending').all()
+            results = []
+            for doc in pending_docs:
+                user = session.query(user_model).filter_by(id=doc.user_id).first()
+                results.append({
+                    'doc': doc.to_dict(),
+                    'user': user.to_dict() if user else None
+                })
+            try:
+                record_admin_action('api_view_verifications', 'verification')
+            except Exception:
+                pass
+            return jsonify(results), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        finally:
+            session.close()
+
     # Expose a human-friendly API docs landing page at /api/docs (does not auto-open Swagger UI)
     @app.route('/api/docs', strict_slashes=False)
     def api_docs_page():
@@ -312,6 +390,10 @@ def create_app():
 
     @app.route('/admin/dashboard')
     def admin_dashboard_page():
+        try:
+            record_admin_action('view_admin_dashboard', 'admin_page')
+        except Exception:
+            pass
         return render_template('admin_dashboard.html')
 
     @app.route('/api/admin/stats', methods=['GET'])
@@ -324,21 +406,50 @@ def create_app():
         session = session_local()
         try:
             user_count = session.query(user_model).count()
-            job_count = session.query(job_model).count()
-            listing_count = session.query(listing_model).count()
+            # Count only active/open items to match admin UI labels
+            try:
+                job_count = session.query(job_model).filter_by(status='open').count()
+            except Exception:
+                job_count = session.query(job_model).count()
+            try:
+                listing_count = session.query(listing_model).filter_by(status='active').count()
+            except Exception:
+                listing_count = session.query(listing_model).count()
             pending_verifications = session.query(verification_doc_model).filter_by(status='pending').count()
+            unverified_users = session.query(user_model).filter_by(verified=False).count()
             
             # Calculate total platform revenue (fees)
-            # Assuming fees are in the super_admin wallet or we sum fee transactions
-            # For now, let's just sum all transactions with type 'fee'
+            # Sum all transactions with type 'fee'
             total_fees = session.query(transaction_model).filter_by(transaction_type='fee').with_entities(func.sum(transaction_model.amount)).scalar() or 0.0
+
+            # Compute withdrawal-specific fees (description contains 'withdraw' or 'withdrawal')
+            try:
+                from sqlalchemy import or_
+                withdrawal_fees_q = session.query(transaction_model).filter(
+                    transaction_model.transaction_type == 'fee',
+                    or_(transaction_model.description.ilike('%withdraw%'), transaction_model.description.ilike('%withdrawal%'))
+                ).with_entities(func.sum(transaction_model.amount)).scalar() or 0.0
+            except Exception:
+                # Fallback to total_fees if description filtering not supported
+                withdrawal_fees_q = 0.0
+
+            withdrawal_fees = float(withdrawal_fees_q)
             
+            # Record admin access to stats if admin_id present
+            try:
+                record_admin_action('view_admin_stats', 'admin_stats')
+            except Exception:
+                pass
+
+            # Return stats
             return jsonify({
                 'users': user_count,
+                'unverified_users': unverified_users,
                 'jobs': job_count,
                 'listings': listing_count,
                 'pending_verifications': pending_verifications,
-                'total_revenue': float(total_fees)
+                'total_revenue': float(total_fees),
+                'withdrawal_fees': withdrawal_fees
             })
         except Exception as e:
             return jsonify({'error': str(e)}), 500
@@ -367,14 +478,51 @@ def create_app():
 
     @app.route('/admin/users-page')
     def admin_users_page():
+        try:
+            record_admin_action('view_users_page', 'admin_page')
+        except Exception:
+            pass
         return render_template('admin_users.html')
+
+    @app.route('/admin/verifications')
+    def admin_verifications_page():
+        try:
+            record_admin_action('view_verifications_page', 'admin_page')
+        except Exception:
+            pass
+        return render_template('admin_verifications.html')
+
+    @app.route('/admin/audit-logs', methods=['GET'])
+    def admin_audit_logs_page():
+        """Render the admin audit logs page (UI). The API for fetching logs is a POST at the same path."""
+        try:
+            record_admin_action('view_audit_logs_page', 'admin_page')
+        except Exception:
+            pass
+        return render_template('admin_audit_logs.html')
+
+    @app.route('/admin/health')
+    def admin_health_page():
+        try:
+            record_admin_action('view_health_page', 'admin_page')
+        except Exception:
+            pass
+        return render_template('admin_health.html')
 
     @app.route('/admin/moderation-page')
     def admin_moderation_page():
+        try:
+            record_admin_action('view_moderation_page', 'admin_page')
+        except Exception:
+            pass
         return render_template('admin_moderation.html')
 
     @app.route('/admin/settings')
     def admin_settings_page():
+        try:
+            record_admin_action('view_settings', 'admin_page')
+        except Exception:
+            pass
         return render_template('admin_settings.html')
 
     @app.route('/marketplace/create')
@@ -640,7 +788,316 @@ def create_app():
 
     @app.route('/health')
     def health():
-        return jsonify({'status': 'ok'}), 200
+        # Extended health check: DB connectivity & query latency, storage usage, optional psutil metrics
+        start = time.time()
+        result = {'status': 'ok', 'timestamp': datetime.datetime.now(datetime.timezone.utc).isoformat()}
+
+        # Database check
+        db_info = {'status': 'unavailable', 'query_time_ms': None, 'user_count': None}
+        if db_available and session_local is not None and user_model is not None:
+            session = None
+            try:
+                t0 = time.time()
+                session = session_local()
+                # simple query to test DB responsiveness
+                user_count = session.query(user_model).count()
+                t1 = time.time()
+                db_info['status'] = 'online'
+                db_info['query_time_ms'] = int((t1 - t0) * 1000)
+                db_info['user_count'] = int(user_count)
+            except Exception as e:
+                db_info['status'] = 'error'
+                db_info['error'] = str(e)
+            finally:
+                try:
+                    if session:
+                        session.close()
+                except Exception:
+                    pass
+        result['db'] = db_info
+
+        # Storage usage
+        try:
+            du = shutil.disk_usage(config.BASE_DIR)
+            total = du.total
+            used = du.used
+            free = du.free
+            percent = int((used / total) * 100) if total else 0
+            result['storage'] = {
+                'total_bytes': total,
+                'used_bytes': used,
+                'free_bytes': free,
+                'used_percent': percent
+            }
+        except Exception as e:
+            result['storage'] = {'error': str(e)}
+
+        # Optional system metrics via psutil if available
+        try:
+            try:
+                import psutil
+            except Exception:
+                psutil = None
+            if psutil:
+                proc = psutil.Process()
+                mem = psutil.virtual_memory()
+                cpu = psutil.cpu_percent(interval=0.1)
+                result['system'] = {
+                    'cpu_percent': cpu,
+                    'memory_total': mem.total,
+                    'memory_used': mem.used,
+                    'memory_percent': mem.percent,
+                    'process_rss': proc.memory_info().rss
+                }
+        except Exception:
+            # psutil not available or failed, skip
+            pass
+
+        # Uptime and response time
+        try:
+            result['uptime_seconds'] = int(time.time() - getattr(app, 'start_time', time.time()))
+        except Exception:
+            result['uptime_seconds'] = None
+
+        result['api_response_time_ms'] = int((time.time() - start) * 1000)
+
+        # Load thresholds (if any) and generate alerts
+        try:
+            DATA_DIR = os.path.join(config.BASE_DIR, 'data')
+            os.makedirs(DATA_DIR, exist_ok=True)
+            thresholds_path = os.path.join(DATA_DIR, 'health_thresholds.json')
+            if os.path.exists(thresholds_path):
+                with open(thresholds_path, 'r', encoding='utf-8') as f:
+                    thresholds = json.load(f)
+            else:
+                thresholds = {}
+        except Exception:
+            thresholds = {}
+
+        alerts = []
+        # api response time threshold
+        api_thr = thresholds.get('api_response_time_ms')
+        if api_thr is not None and result.get('api_response_time_ms') is not None and result['api_response_time_ms'] > api_thr:
+            alerts.append({'metric': 'api_response_time_ms', 'value': result['api_response_time_ms'], 'threshold': api_thr, 'level': 'warning'})
+
+        # storage threshold
+        storage_thr = thresholds.get('storage_used_percent')
+        if storage_thr is not None and result.get('storage') and result['storage'].get('used_percent') is not None and result['storage']['used_percent'] > storage_thr:
+            alerts.append({'metric': 'storage_used_percent', 'value': result['storage']['used_percent'], 'threshold': storage_thr, 'level': 'critical'})
+
+        # db query time
+        db_thr = thresholds.get('db_query_time_ms')
+        if db_thr is not None and result.get('db') and result['db'].get('query_time_ms') is not None and result['db']['query_time_ms'] > db_thr:
+            alerts.append({'metric': 'db_query_time_ms', 'value': result['db']['query_time_ms'], 'threshold': db_thr, 'level': 'warning'})
+
+        # cpu threshold (if available)
+        cpu_thr = thresholds.get('cpu_percent')
+        if cpu_thr is not None and result.get('system') and result['system'].get('cpu_percent') is not None and result['system']['cpu_percent'] > cpu_thr:
+            alerts.append({'metric': 'cpu_percent', 'value': result['system']['cpu_percent'], 'threshold': cpu_thr, 'level': 'warning'})
+
+        result['alerts'] = alerts
+
+        # Append to history file (keep last 200 entries)
+        try:
+            history_path = os.path.join(DATA_DIR, 'health_history.json')
+            history = []
+            if os.path.exists(history_path):
+                try:
+                    with open(history_path, 'r', encoding='utf-8') as f:
+                        history = json.load(f)
+                except Exception:
+                    history = []
+            entry = {
+                'timestamp': result.get('timestamp'),
+                'api_response_time_ms': result.get('api_response_time_ms'),
+                'storage_used_percent': result.get('storage', {}).get('used_percent'),
+                'db_query_time_ms': result.get('db', {}).get('query_time_ms') if result.get('db') else None,
+                'cpu_percent': result.get('system', {}).get('cpu_percent') if result.get('system') else None
+            }
+            history.append(entry)
+            # keep tail (increase retention so restart doesn't lose recent history)
+            history = history[-2000:]
+            with open(history_path, 'w', encoding='utf-8') as f:
+                json.dump(history, f, default=str)
+            result['history_count'] = len(history)
+        except Exception:
+            pass
+
+        return jsonify(result), 200
+
+    # ----- Health thresholds and history endpoints -----
+    @app.route('/api/health/thresholds', methods=['GET'])
+    def get_health_thresholds():
+        DATA_DIR = os.path.join(config.BASE_DIR, 'data')
+        os.makedirs(DATA_DIR, exist_ok=True)
+        thresholds_path = os.path.join(DATA_DIR, 'health_thresholds.json')
+        if os.path.exists(thresholds_path):
+            try:
+                with open(thresholds_path, 'r', encoding='utf-8') as f:
+                    return jsonify(json.load(f)), 200
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+        # default thresholds
+        defaults = {
+            'api_response_time_ms': 200,
+            'storage_used_percent': 80,
+            'db_query_time_ms': 200,
+            'cpu_percent': 85
+        }
+        return jsonify(defaults), 200
+
+    @app.route('/api/health/thresholds', methods=['POST'])
+    @require_admin
+    def set_health_thresholds():
+        DATA_DIR = os.path.join(config.BASE_DIR, 'data')
+        os.makedirs(DATA_DIR, exist_ok=True)
+        thresholds_path = os.path.join(DATA_DIR, 'health_thresholds.json')
+        data = request.get_json() or {}
+        try:
+            with open(thresholds_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f)
+            return jsonify({'message': 'thresholds saved'}), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/health/history', methods=['GET'])
+    @require_admin
+    def get_health_history():
+        DATA_DIR = os.path.join(config.BASE_DIR, 'data')
+        history_path = os.path.join(DATA_DIR, 'health_history.json')
+        limit = int(request.args.get('limit', 100))
+        # optional server-side filtering: minutes (relative window), since (ISO), until (ISO)
+        minutes = request.args.get('minutes')
+        since_q = request.args.get('since')
+        until_q = request.args.get('until')
+        if not os.path.exists(history_path):
+            return jsonify([]), 200
+        try:
+            with open(history_path, 'r', encoding='utf-8') as f:
+                history = json.load(f)
+
+            # if minutes provided, compute cutoff and filter
+            filtered = history
+            try:
+                # convert stored timestamps to datetimes for comparison
+                if minutes is not None:
+                    try:
+                        m = int(minutes)
+                        cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=m)
+                        newf = []
+                        for h in filtered:
+                            ts = h.get('timestamp') or h.get('time') or h.get('checked_at') or h.get('t')
+                            if not ts:
+                                continue
+                            try:
+                                t = datetime.datetime.fromisoformat(ts)
+                                # ensure tz-aware
+                                if t.tzinfo is None:
+                                    t = t.replace(tzinfo=datetime.timezone.utc)
+                                if t >= cutoff:
+                                    newf.append(h)
+                            except Exception:
+                                continue
+                        filtered = newf
+                    except Exception:
+                        pass
+                # since/until override
+                if since_q:
+                    try:
+                        since_dt = datetime.datetime.fromisoformat(since_q)
+                        if since_dt.tzinfo is None:
+                            since_dt = since_dt.replace(tzinfo=datetime.timezone.utc)
+                        newf = []
+                        for h in filtered:
+                            ts = h.get('timestamp') or h.get('time') or h.get('checked_at') or h.get('t')
+                            if not ts:
+                                continue
+                            try:
+                                t = datetime.datetime.fromisoformat(ts)
+                                if t.tzinfo is None:
+                                    t = t.replace(tzinfo=datetime.timezone.utc)
+                                if t >= since_dt:
+                                    newf.append(h)
+                            except Exception:
+                                continue
+                        filtered = newf
+                    except Exception:
+                        pass
+                if until_q:
+                    try:
+                        until_dt = datetime.datetime.fromisoformat(until_q)
+                        if until_dt.tzinfo is None:
+                            until_dt = until_dt.replace(tzinfo=datetime.timezone.utc)
+                        newf = []
+                        for h in filtered:
+                            ts = h.get('timestamp') or h.get('time') or h.get('checked_at') or h.get('t')
+                            if not ts:
+                                continue
+                            try:
+                                t = datetime.datetime.fromisoformat(ts)
+                                if t.tzinfo is None:
+                                    t = t.replace(tzinfo=datetime.timezone.utc)
+                                if t <= until_dt:
+                                    newf.append(h)
+                            except Exception:
+                                continue
+                        filtered = newf
+                    except Exception:
+                        pass
+            except Exception:
+                # if any filtering step fails, fall back to full history
+                filtered = history
+
+            # support CSV export
+            fmt = request.args.get('format')
+            tail = filtered[-limit:]
+            if fmt and fmt.lower() == 'csv':
+                try:
+                    output = io.StringIO()
+                    writer = csv.writer(output)
+                    # header
+                    writer.writerow(['timestamp','api_response_time_ms','storage_used_percent','db_query_time_ms','cpu_percent'])
+                    for h in tail:
+                        writer.writerow([
+                            h.get('timestamp') or h.get('time') or h.get('checked_at') or '',
+                            h.get('api_response_time_ms',''),
+                            h.get('storage_used_percent',''),
+                            h.get('db_query_time_ms',''),
+                            h.get('cpu_percent','')
+                        ])
+                    csv_data = output.getvalue()
+                    output.close()
+                    headers = {
+                        'Content-Disposition': 'attachment; filename="health_history.csv"'
+                    }
+                    return Response(csv_data, mimetype='text/csv', headers=headers)
+                except Exception as e:
+                    return jsonify({'error': 'failed to generate csv', 'detail': str(e)}), 500
+
+            # return the tail up to limit (json)
+            return jsonify(tail), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/api/health/alert-test', methods=['POST'])
+    @require_admin
+    def health_alert_test():
+        data = request.get_json() or {}
+        to_email = data.get('email')
+        if not to_email:
+            return jsonify({'error': 'email required'}), 400
+        # synthesize a sample alert
+        subject = 'Test: System Health Alert'
+        body = 'This is a test alert from FLB Extended system health.\n\n'
+        try:
+            # include current health snapshot
+            res = requests.get(request.url_root.rstrip('/') + '/health')
+            body += 'Current health snapshot:\n' + (res.text if res.ok else 'unable to fetch')
+        except Exception as e:
+            body += 'error fetching health: ' + str(e)
+
+        send_mock_email(to_email, subject, body)
+        return jsonify({'message': 'test alert sent (mock)'}), 200
 
     @app.route('/users')
     def list_users():
@@ -740,26 +1197,60 @@ def create_app():
 
         return jsonify(user.to_dict()), 200
 
+    @app.route('/logout')
+    def logout():
+        """Clear server-side session (if any) and redirect to login page"""
+        try:
+            from flask import session as flask_session
+            flask_session.pop('user_id', None)
+        except Exception:
+            pass
+        return redirect(url_for('login_page'))
+
     @app.route('/documents/upload', methods=['POST'])
     def upload_document():
         """Upload verification document (NIN, passport, or driver's license)"""
         if not db_available or session_local is None or user_model is None or verification_doc_model is None:
             return jsonify({'error': 'database not available'}), 503
 
-        try:
-            data = request.get_json()
-        except Exception:
-            data = None
+        data = None
+        
+        # Handle Multipart/Form-Data (File Upload)
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            data = request.form.to_dict()
+            
+            if 'document' in request.files:
+                file = request.files['document']
+                if file and file.filename:
+                    from werkzeug.utils import secure_filename
+                    filename = secure_filename(f"{int(time.time())}_{file.filename}")
+                    
+                    # Ensure directory exists
+                    upload_dir = os.path.join('static', 'uploads', 'verifications')
+                    os.makedirs(upload_dir, exist_ok=True)
+                    
+                    file_path = os.path.join(upload_dir, filename)
+                    file.save(file_path)
+                    
+                    # Store relative path for DB
+                    data['document_path'] = f'/static/uploads/verifications/{filename}'
+        
+        # Handle JSON
+        elif request.is_json:
+            try:
+                data = request.get_json()
+            except Exception:
+                data = None
 
         if not data:
-            return jsonify({'error': 'invalid json'}), 400
+            return jsonify({'error': 'invalid request data'}), 400
 
         required = ('user_id', 'document_type', 'document_number')
         if not all(k in data for k in required):
             return jsonify({'error': 'missing required fields: user_id, document_type, document_number'}), 400
 
         # Validate document_type
-        VALID_DOC_TYPES = {'NIN', 'passport', 'drivers_license'}
+        VALID_DOC_TYPES = {'NIN', 'passport', 'drivers_license', 'voters_card'}
         if data['document_type'] not in VALID_DOC_TYPES:
             return jsonify({
                 'error': f'Invalid document_type. Must be one of: {sorted(VALID_DOC_TYPES)}'
@@ -842,45 +1333,117 @@ def create_app():
 
         session = session_local()
 
-        # Verify admin exists and has admin role
+        # Verify admin exists and has admin or super_admin role
         admin = session.query(user_model).filter_by(id=data['admin_id']).first()
-        if not admin or admin.account_type != 'admin':
+        if not admin or admin.account_type not in ['admin', 'super_admin']:
             session.close()
             return jsonify({'error': 'unauthorized: admin access required'}), 403
 
-        # Get document
-        doc = session.query(verification_doc_model).filter_by(id=doc_id).first()
-        if not doc:
+        # Get document with a fresh read and check status to prevent approving non-pending docs
+        try:
+            # Optional: use with_for_update() for DBs that support row-level locking
+            try:
+                doc = session.query(verification_doc_model).filter_by(id=doc_id).with_for_update().first()
+            except Exception:
+                doc = session.query(verification_doc_model).filter_by(id=doc_id).first()
+
+            if not doc:
+                session.close()
+                return jsonify({'error': 'document not found'}), 404
+
+            # Prevent changing a document that is no longer pending
+            current_status = getattr(doc, 'status', None)
+            if current_status != 'pending':
+                session.close()
+                return jsonify({'error': 'document already processed', 'status': current_status}), 409
+
+            # Update document status
+            doc.status = data['status']
+            doc.admin_notes = data.get('admin_notes')
+            doc.reviewed_at = datetime.datetime.now(datetime.timezone.utc)
+            doc.reviewed_by = data['admin_id']
+
+            # Log admin action
+            try:
+                log_admin_action(
+                    admin_id=data['admin_id'],
+                    action=f'verify_document_{data["status"]}',
+                    target_type='verification_document',
+                    target_id=doc.id,
+                    reason=data.get('admin_notes'),
+                    details=f'Document {data["status"]}'
+                )
+            except Exception:
+                pass
+
+            # If approved, mark user as verified
+            if data['status'] == 'approved':
+                user = session.query(user_model).filter_by(id=doc.user_id).first()
+                if user:
+                    user.verified = True
+
+            session.commit()
+            session.refresh(doc)
+            result = doc.to_dict()
             session.close()
-            return jsonify({'error': 'document not found'}), 404
+            return jsonify(result), 200
+        except Exception as e:
+            session.rollback()
+            session.close()
+            return jsonify({'error': str(e)}), 500
 
-        # Update document status
-        doc.status = data['status']
-        doc.admin_notes = data.get('admin_notes')
-        doc.reviewed_at = datetime.datetime.now(datetime.timezone.utc)
-        doc.reviewed_by = data['admin_id']
+    @app.route('/admin/verify-user/<int:user_id>', methods=['POST'])
+    @require_admin
+    def admin_verify_user(user_id):
+        """Admin convenience endpoint: find a pending verification document for the user and approve it."""
+        if not db_available or session_local is None or verification_doc_model is None or user_model is None:
+            return jsonify({'error': 'database not available'}), 503
 
-        # Log admin action
-        log_admin_action(
-            admin_id=data['admin_id'],
-            action=f'verify_document_{data["status"]}',
-            target_type='verification_document',
-            target_id=doc.id,
-            reason=data.get('admin_notes'),
-            details=f'Document {data["status"]}'
-        )
+        data = request.get_json() or {}
+        admin_id = data.get('admin_id') or request.args.get('admin_id')
+        if not admin_id:
+            return jsonify({'error': 'admin_id required'}), 401
 
-        # If approved, mark user as verified
-        if data['status'] == 'approved':
-            user = session.query(user_model).filter_by(id=doc.user_id).first()
+        session = session_local()
+        try:
+            doc = session.query(verification_doc_model).filter_by(user_id=user_id, status='pending').first()
+            if not doc:
+                session.close()
+                return jsonify({'error': 'No pending verification document for this user'}), 404
+
+            # Approve the document
+            doc.status = 'approved'
+            doc.admin_notes = data.get('admin_notes')
+            doc.reviewed_at = datetime.datetime.now(datetime.timezone.utc)
+            doc.reviewed_by = int(admin_id)
+
+            # Mark the user as verified
+            user = session.query(user_model).filter_by(id=user_id).first()
             if user:
                 user.verified = True
 
-        session.commit()
-        session.refresh(doc)
-        session.close()
+            session.commit()
 
-        return jsonify(doc.to_dict()), 200
+            # Log admin action
+            try:
+                log_admin_action(
+                    admin_id=admin_id,
+                    action='verify_user_admin_approved',
+                    target_type='user',
+                    target_id=user_id,
+                    reason=data.get('admin_notes')
+                )
+            except Exception:
+                pass
+
+            session.refresh(doc)
+            result = doc.to_dict()
+            session.close()
+            return jsonify(result), 200
+        except Exception as e:
+            session.rollback()
+            session.close()
+            return jsonify({'error': str(e)}), 500
 
     # ========== MESSAGING ENDPOINTS ==========
     
@@ -1150,6 +1713,8 @@ def create_app():
 
         # Handle file uploads
         import json
+        import csv
+        import io
         import os
         from werkzeug.utils import secure_filename
         
@@ -3094,7 +3659,7 @@ def create_app():
         return jsonify(result), 201
     
     @app.route('/admin/audit-logs', methods=['POST'])
-    @require_super_admin
+    @require_admin
     def get_audit_logs():
         """Super Admin: Get all audit logs (with optional filters)"""
         if not db_available:
@@ -3125,6 +3690,60 @@ def create_app():
         session.close()
         
         return jsonify(result), 200
+
+
+    @app.route('/admin/audit-logs/mark-read', methods=['POST'])
+    @require_admin
+    def mark_audit_logs_read():
+        """Mark one or more audit log entries as read. JSON: { ids: [1,2,3] } or { mark_all: true }"""
+        if not db_available:
+            return jsonify({'error': 'database not available'}), 500
+
+        data = request.get_json() or {}
+        session = session_local()
+        try:
+            if data.get('mark_all'):
+                session.query(admin_audit_log_model).update({ admin_audit_log_model.read: True })
+                session.commit()
+                session.close()
+                return jsonify({'message': 'All logs marked read'}), 200
+
+            ids = data.get('ids') or []
+            if not ids:
+                session.close()
+                return jsonify({'error': 'ids required'}), 400
+
+            session.query(admin_audit_log_model).filter(admin_audit_log_model.id.in_(ids)).update({ admin_audit_log_model.read: True }, synchronize_session=False)
+            session.commit()
+            session.close()
+            return jsonify({'message': 'Marked specified logs as read'}), 200
+        except Exception as e:
+            session.rollback()
+            session.close()
+            return jsonify({'error': str(e)}), 500
+
+
+    @app.route('/api/admin/fee-transactions', methods=['GET'])
+    @require_admin
+    def api_fee_transactions():
+        """Return recent transactions that are marked as fees for debugging/inspection"""
+        if not db_available:
+            return jsonify({'error': 'database not available'}), 500
+
+        limit = int(request.args.get('limit', 20))
+        session = session_local()
+        try:
+            q = session.query(transaction_model).filter_by(transaction_type='fee').order_by(transaction_model.created_at.desc()).limit(limit).all()
+            results = [t.to_dict() for t in q]
+            try:
+                record_admin_action('api_view_fee_transactions', 'transactions')
+            except Exception:
+                pass
+            return jsonify(results), 200
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+        finally:
+            session.close()
 
     # -------------------------------------------------------------------------
     # Payment & Wallet Routes (Milestone 8)

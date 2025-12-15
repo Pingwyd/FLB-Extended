@@ -601,6 +601,7 @@ class AdminAuditLog(Base):
     reason = Column(Text, nullable=True)
     details = Column(Text, nullable=True)  # JSON or additional context
     ip_address = Column(String(50), nullable=True)
+    read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
     
     def to_dict(self):
@@ -613,6 +614,7 @@ class AdminAuditLog(Base):
             'reason': self.reason,
             'details': self.details,
             'ip_address': self.ip_address,
+            'read': self.read,
             'created_at': self.created_at.isoformat() if self.created_at else None
         }
 

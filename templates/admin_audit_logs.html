@@ -1,0 +1,56 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}Admin Audit Logs - FLB Extended{% endblock %}
+
+{% block extra_head %}
+<script src="/static/js/admin_audit_logs.js" defer></script>
+{% endblock %}
+
+{% block header_title %}Audit Logs{% endblock %}
+
+{% block content %}
+<div x-data="adminAuditLogs()" x-init="init()" class="space-y-4 text-white">
+  <div class="flex items-center gap-2">
+    <input x-model="filter_admin_id" placeholder="Filter admin id" class="px-2 py-1 rounded bg-gray-800 border border-gray-700" />
+    <input x-model="filter_action" placeholder="Filter action" class="px-2 py-1 rounded bg-gray-800 border border-gray-700" />
+    <button @click="loadLogs()" class="px-3 py-1 bg-blue-600 rounded">Apply</button>
+    <button @click="markAllRead()" class="px-3 py-1 bg-green-600 rounded">Mark All Read</button>
+    <button @click="loadLogs()" class="px-3 py-1 bg-gray-700 rounded">Refresh</button>
+  </div>
+
+  <div class="bg-white text-black rounded overflow-auto">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="p-2 text-left"> </th>
+          <th class="p-2 text-left">Admin ID</th>
+          <th class="p-2 text-left">Action</th>
+          <th class="p-2 text-left">Target</th>
+          <th class="p-2 text-left">Reason / Details</th>
+          <th class="p-2 text-left">When</th>
+        </tr>
+      </thead>
+      <tbody>
+        <template x-for="log in logs" :key="log.id">
+          <tr :class="log.read ? 'opacity-60' : ''" class="border-b">
+            <td class="p-2"><input type="checkbox" :value="log.id" x-model="selected"></td>
+            <td class="p-2" x-text="log.admin_id"></td>
+            <td class="p-2" x-text="log.action"></td>
+            <td class="p-2" x-text="(log.target_type || '') + (log.target_id ? ':' + log.target_id : '')"></td>
+            <td class="p-2" x-text="log.reason || log.details || '-' "></td>
+            <td class="p-2" x-text="formatDate(log.created_at)"></td>
+          </tr>
+        </template>
+        <tr x-show="logs.length === 0">
+          <td class="p-4" colspan="6">No audit logs found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex gap-2">
+    <button @click="markSelectedRead()" class="px-3 py-1 bg-yellow-600 rounded">Mark Selected Read</button>
+  </div>
+</div>
+
+{% endblock %}

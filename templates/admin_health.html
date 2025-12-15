@@ -1,0 +1,409 @@
+{% extends 'admin_base.html' %}
+
+{% block title %}System Health - Admin{% endblock %}
+
+{% block header_title %}System Health{% endblock %}
+
+{% block content %}
+<div x-data="healthApp()" x-init="init(); loadThresholds(); loadHistory();" class="max-w-6xl mx-auto">
+    <div class="bg-gray-800 rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-white mb-2">System Health</h2>
+        <p class="text-sm text-gray-400 mb-4">Live system metrics: availability, latency, storage, and resource usage.</p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Left: current metrics -->
+            <div class="space-y-4">
+                <div class="p-4 bg-gray-900 rounded">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <p class="text-sm text-gray-400">Database Status</p>
+                            <p class="text-sm font-medium text-white" x-text="health.db && health.db.status ? (health.db.status=='online' ? 'Online' : health.db.status) : 'unknown'"></p>
+                        </div>
+                        <div class="text-sm text-gray-400">Query: <span class="text-white" x-text="health.db && health.db.query_time_ms ? health.db.query_time_ms + 'ms' : '-' "></span></div>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-3">
+                        <div class="bg-green-500 h-3 rounded-full" :style="{ width: (health.db && health.db.status=='online' ? '100%' : '6%') }"></div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-gray-900 rounded">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <p class="text-sm text-gray-400">API Response Time</p>
+                            <p class="text-sm font-medium text-white" x-text="health.api_response_time_ms + ' ms'"></p>
+                        </div>
+                        <div class="text-sm text-gray-400">Uptime: <span class="text-white" x-text="formatUptime(health.uptime_seconds)"></span></div>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-3">
+                        <div class="bg-green-500 h-3 rounded-full" :style="{ width: Math.min(100, (health.api_response_time_ms || 0) / 100 * 100) + '%' }"></div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-gray-900 rounded">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <p class="text-sm text-gray-400">Storage Usage</p>
+                            <p class="text-sm font-medium text-white" x-text="health.storage ? (health.storage.used_percent + '%') : '-' "></p>
+                        </div>
+                        <div class="text-sm text-gray-400" x-show="health.storage">
+                            <span class="text-white" x-text="formatBytes(health.storage.used_bytes)"></span>
+                            <span class="text-gray-500"> / </span>
+                            <span class="text-gray-400" x-text="formatBytes(health.storage.total_bytes)"></span>
+                        </div>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-3">
+                        <div class="bg-yellow-500 h-3 rounded-full" :style="{ width: (health.storage ? health.storage.used_percent + '%' : '0%') }"></div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-gray-900 rounded" x-show="health.system">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <p class="text-sm text-gray-400">CPU</p>
+                            <p class="text-sm font-medium text-white" x-text="health.system.cpu_percent + '%'"></p>
+                        </div>
+                        <div class="text-sm text-gray-400">Memory <span class="text-white" x-text="health.system.memory_percent + '%'"></span></div>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-3 mb-2">
+                        <div class="bg-green-500 h-3 rounded-full" :style="{ width: (health.system ? health.system.memory_percent + '%' : '0%') }"></div>
+                    </div>
+                    <div class="text-xs text-gray-400">Process RSS: <span class="text-white" x-text="formatBytes(health.system.process_rss)"></span></div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button @click="init(); loadHistory()" class="px-3 py-1 bg-blue-600 text-white rounded">Refresh</button>
+                    <button @click="loadHistory()" class="px-3 py-1 bg-gray-700 text-white rounded">Refresh History</button>
+                </div>
+            </div>
+
+            <!-- Right: alerts, thresholds, charts -->
+            <div class="space-y-4">
+                <div class="p-4 bg-gray-900 rounded">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <p class="text-sm text-gray-400">Active Alerts</p>
+                            <p class="text-sm font-medium text-white" x-text="(health.alerts && health.alerts.length) ? (health.alerts.length + ' active') : 'No alerts'"></p>
+                        </div>
+                        <div>
+                            <button @click="testAlert()" class="px-3 py-1 bg-red-600 text-white rounded">Send Test Alert</button>
+                        </div>
+                    </div>
+                    <template x-if="health.alerts && health.alerts.length">
+                        <div class="mt-2 space-y-2">
+                            <template x-for="a in health.alerts" :key="a.metric">
+                                <div class="p-2 bg-gray-800 rounded flex justify-between items-center">
+                                    <div>
+                                        <div class="text-sm text-yellow-300" x-text="a.metric + ': ' + a.value + ' (thr ' + a.threshold + ')'">CPU: 90 (thr 85)</div>
+                                    </div>
+                                    <div class="text-xs text-gray-400" x-text="a.level"></div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="p-4 bg-gray-900 rounded">
+                    <p class="text-sm text-gray-400 mb-2">Thresholds</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <label class="text-xs text-gray-400">API ms</label>
+                        <input class="bg-gray-800 text-white p-2 rounded" x-model.number="thresholds.api_response_time_ms" />
+                        <label class="text-xs text-gray-400">Storage %</label>
+                        <input class="bg-gray-800 text-white p-2 rounded" x-model.number="thresholds.storage_used_percent" />
+                        <label class="text-xs text-gray-400">DB query ms</label>
+                        <input class="bg-gray-800 text-white p-2 rounded" x-model.number="thresholds.db_query_time_ms" />
+                        <label class="text-xs text-gray-400">CPU %</label>
+                        <input class="bg-gray-800 text-white p-2 rounded" x-model.number="thresholds.cpu_percent" />
+                    </div>
+                    <div class="mt-3 flex gap-2">
+                        <button @click="saveThresholds()" class="px-3 py-1 bg-green-600 text-white rounded">Save</button>
+                        <button @click="loadThresholds()" class="px-3 py-1 bg-gray-700 text-white rounded">Reload</button>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-gray-900 rounded">
+                    <div class="mb-4">
+                        <div class="flex justify-between items-start mb-3">
+                             <p class="text-sm text-gray-400 font-medium">History Charts (last checks)</p>
+                             <div class="flex items-center gap-2">
+                                 <label class="text-xs text-gray-400">Auto-refresh</label>
+                                 <button @click="toggleAutoRefresh()" :class="autoRefresh ? 'bg-green-600' : 'bg-gray-700'" class="px-2 py-1 text-xs rounded text-white transition-colors"> <span x-text="autoRefresh ? 'On' : 'Off'"></span> </button>
+                             </div>
+                        </div>
+                        
+                        <!-- Controls Row -->
+                        <div class="flex flex-wrap items-center gap-3 bg-gray-800 p-3 rounded border border-gray-700">
+                            <!-- View Select -->
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs text-gray-400">View:</label>
+                                <select x-model.number="timeWindowMinutes" class="bg-gray-700 text-white p-1.5 rounded text-xs border border-gray-600 focus:border-blue-500 outline-none">
+                                    <option value="5">5 min</option>
+                                    <option value="10">10 min</option>
+                                    <option value="30">30 min</option>
+                                    <option value="60">1 hour</option>
+                                    <option value="240">4 hours</option>
+                                    <option value="1440">1 day</option>
+                                    <option value="0">All</option>
+                                </select>
+                            </div>
+                
+                            <!-- Date Range -->
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <label class="text-xs text-gray-400">Range:</label>
+                                <input type="datetime-local" x-model="sinceInput" class="bg-gray-700 text-white p-1 rounded text-xs border border-gray-600 w-36 focus:border-blue-500 outline-none" />
+                                <span class="text-gray-500">-</span>
+                                <input type="datetime-local" x-model="untilInput" class="bg-gray-700 text-white p-1 rounded text-xs border border-gray-600 w-36 focus:border-blue-500 outline-none" />
+                            </div>
+                
+                            <!-- Actions -->
+                            <div class="flex items-center gap-2 ml-auto">
+                                <button @click="loadHistory()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-medium transition-colors shadow-sm">Apply</button>
+                                <button @click="exportCSV()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-medium transition-colors shadow-sm">Export CSV</button>
+                            </div>
+                        </div>
+                
+                        <!-- Status Line -->
+                        <div class="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                             <div>Current Window: <span class="text-gray-300" x-text="timeWindowMinutesLabel"></span></div>
+                             <div>Status: <span class="text-green-400" x-text="lastFilterLog"></span></div>
+                        </div>
+                    </div>
+                    <div class="h-36 mb-4">
+                        <canvas id="apiChart"></canvas>
+                    </div>
+                    <div class="h-36">
+                        <canvas id="storageChart"></canvas>
+                    </div>
+                    <div class="mt-3 text-xs text-gray-400">
+                        Raw: <span class="text-white" x-text="(historyRaw||[]).length"></span>
+                        &nbsp;|&nbsp; Filtered: <span class="text-white" x-text="(history||[]).length"></span>
+                        &nbsp;|&nbsp; First: <span class="text-white" x-text="history && history.length ? (history[0].timestamp||history[0].time||history[0].checked_at||'') : '-' "></span>
+                        &nbsp;|&nbsp; Last: <span class="text-white" x-text="history && history.length ? (history[history.length-1].timestamp||history[history.length-1].time||history[history.length-1].checked_at||'') : '-' "></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function healthApp(){
+    return {
+        health: {},
+        thresholds: {},
+        historyRaw: [],
+        history: [],
+        timeWindowMinutes: 60,
+        timeWindowMinutesLabel: '1 hour',
+        sinceInput: '',
+        untilInput: '',
+        lastFilterLog: '',
+        autoRefresh: false,
+        refreshIntervalMs: 15000,
+        _refreshHandle: null,
+        apiChart: null,
+        storageChart: null,
+        async init(){
+            try{
+                const res = await fetch('/health');
+                if(res.ok){
+                    this.health = await res.json();
+                } else {
+                    this.health = { status: 'unreachable' };
+                }
+            } catch(e){
+                this.health = { status: 'error', error: String(e) };
+            }
+        },
+        async loadThresholds(){
+            try{
+                const res = await fetch('/api/health/thresholds');
+                if(res.ok) this.thresholds = await res.json();
+            }catch(e){console.error(e)}
+        },
+        async saveThresholds(){
+            try{
+                const res = await fetch('/api/health/thresholds', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(this.thresholds) });
+                if(res.ok) alert('Thresholds saved');
+            }catch(e){alert('Failed to save thresholds')}
+        },
+        async loadHistory(){
+            try{
+                const adminId = (JSON.parse(localStorage.getItem('flb_user')||'{}').id||'');
+                // Request server-side filtered history when a time window is selected
+                let url = '/api/health/history?limit=500&admin_id=' + adminId;
+                if(this.timeWindowMinutes && this.timeWindowMinutes > 0){
+                    url += '&minutes=' + encodeURIComponent(this.timeWindowMinutes);
+                }
+                if(this.sinceInput){
+                    try{ url += '&since=' + encodeURIComponent(new Date(this.sinceInput).toISOString()); }catch(e){}
+                }
+                if(this.untilInput){
+                    try{ url += '&until=' + encodeURIComponent(new Date(this.untilInput).toISOString()); }catch(e){}
+                }
+                const res = await fetch(url);
+                if(res.ok){
+                    this.historyRaw = await res.json();
+                    this.filterHistory();
+                }
+            }catch(e){console.error(e)}
+        },
+
+        async exportCSV(){
+            try{
+                const adminId = (JSON.parse(localStorage.getItem('flb_user')||'{}').id||'');
+                let url = '/api/health/history?limit=2000&admin_id=' + adminId + '&format=csv';
+                if(this.timeWindowMinutes && this.timeWindowMinutes > 0){ url += '&minutes=' + encodeURIComponent(this.timeWindowMinutes); }
+                if(this.sinceInput){ try{ url += '&since=' + encodeURIComponent(new Date(this.sinceInput).toISOString()); }catch(e){} }
+                if(this.untilInput){ try{ url += '&until=' + encodeURIComponent(new Date(this.untilInput).toISOString()); }catch(e){} }
+
+                const res = await fetch(url);
+                if(!res.ok){ alert('Failed to export CSV'); return; }
+                const blob = await res.blob();
+                const href = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = href;
+                a.download = 'health_history.csv';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(href);
+            }catch(e){ console.error('exportCSV error', e); alert('Export failed'); }
+        },
+
+        // Filter historyRaw into history according to timeWindowMinutes (0 = all)
+        filterHistory(){
+            try{
+                console.log('filterHistory', { timeWindowMinutes: this.timeWindowMinutes, rawLen: (this.historyRaw||[]).length });
+                // update readable label
+                const map = { '5':'5 min', '10':'10 min', '30':'30 min', '60':'1 hour', '240':'4 hours', '1440':'1 day', '0':'All' };
+                this.timeWindowMinutesLabel = map[String(this.timeWindowMinutes)] || (this.timeWindowMinutes + 'm');
+                if(!this.historyRaw || !this.historyRaw.length){ this.history = []; this.renderCharts(); return; }
+                if(!this.timeWindowMinutes || this.timeWindowMinutes <= 0){
+                    this.history = this.historyRaw.slice(-500);
+                    this.renderCharts();
+                    this.lastFilterLog = `showing all (${this.history.length})`;
+                    return;
+                }
+                const now = Date.now();
+                const cutoff = now - (this.timeWindowMinutes * 60 * 1000);
+                this.history = this.historyRaw.filter(h => {
+                    if(!h) return false;
+                    // prefer timestamp, fall back to ts or time
+                    const ts = h.timestamp || h.time || h.checked_at || h.t;
+                    if(!ts) return false;
+                    const t = Date.parse(ts);
+                    if(isNaN(t)) return false;
+                    return t >= cutoff;
+                }).slice(-500);
+                if(this.history.length === 0){
+                    // fallback to recent points if filtering yields none
+                    this.history = this.historyRaw.slice(-10);
+                }
+                console.log('filtered history length', this.history.length);
+                this.lastFilterLog = `filtered ${this.history.length} points (window ${this.timeWindowMinutes}m)`;
+                this.renderCharts();
+            }catch(e){ console.error('filterHistory error', e); this.history = this.historyRaw || []; this.renderCharts(); }
+        },
+        // Auto-refresh helpers
+        toggleAutoRefresh(){
+            this.autoRefresh = !this.autoRefresh;
+            if(this.autoRefresh) this.startAutoRefresh(); else this.stopAutoRefresh();
+        },
+        startAutoRefresh(){
+            if(this._refreshHandle) clearInterval(this._refreshHandle);
+            this._refreshHandle = setInterval(()=>{ this.loadHistory(); }, this.refreshIntervalMs);
+            // also kick off an immediate fetch
+            this.loadHistory();
+        },
+        stopAutoRefresh(){
+            if(this._refreshHandle) clearInterval(this._refreshHandle);
+            this._refreshHandle = null;
+        },
+        renderCharts(){
+                // Keep a full-ISO labels array for tooltips, but show compact time labels on the x-axis
+            const fullLabels = this.history.map(h => h.timestamp || '').slice(-50);
+            const labels = fullLabels.map(ts => {
+                if(!ts) return '';
+                try{
+                    const d = new Date(ts);
+                    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                }catch(e){
+                    return ts;
+                }
+            });
+
+            const apiData = this.history.map(h => h.api_response_time_ms || 0).slice(-50);
+            const storageData = this.history.map(h => h.storage_used_percent || 0).slice(-50);
+
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        ticks: {
+                            autoSkip: true,
+                            maxTicksLimit: 8,
+                            maxRotation: 0,
+                            minRotation: 0
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            title: (ctx) => {
+                                // Use the full ISO timestamp in the tooltip title
+                                const idx = ctx[0] && ctx[0].dataIndex != null ? ctx[0].dataIndex : 0;
+                                return fullLabels[idx] || ctx[0].label || '';
+                            }
+                        }
+                    }
+                }
+            };
+
+            // Destroy existing charts to ensure full redraw with new data/options
+            try{ if(this.apiChart){ this.apiChart.destroy(); this.apiChart = null; } }catch(e){ console.warn('destroy apiChart', e); }
+            try{ if(this.storageChart){ this.storageChart.destroy(); this.storageChart = null; } }catch(e){ console.warn('destroy storageChart', e); }
+
+            try{
+                const apiCanvas = document.getElementById('apiChart');
+                if(apiCanvas && apiCanvas.getContext){
+                    const ctx = apiCanvas.getContext('2d');
+                    this.apiChart = new Chart(ctx, {
+                        type: 'line',
+                        data: { labels, datasets: [{ label: 'API ms', data: apiData, borderColor: '#10B981', backgroundColor: 'rgba(16,185,129,0.08)', pointRadius: 2, tension: 0.25 }] },
+                        options: commonOptions
+                    });
+                } else {
+                    console.warn('apiChart canvas not available');
+                }
+            }catch(e){ console.error('render apiChart error', e); }
+
+            try{
+                const storageCanvas = document.getElementById('storageChart');
+                if(storageCanvas && storageCanvas.getContext){
+                    const ctx2 = storageCanvas.getContext('2d');
+                    this.storageChart = new Chart(ctx2, {
+                        type: 'line',
+                        data: { labels, datasets: [{ label: '% storage', data: storageData, borderColor: '#F59E0B', backgroundColor: 'rgba(245,158,11,0.06)', pointRadius: 2, tension: 0.25 }] },
+                        options: commonOptions
+                    });
+                } else {
+                    console.warn('storageChart canvas not available');
+                }
+            }catch(e){ console.error('render storageChart error', e); }
+        },
+        async testAlert(){
+            const email = prompt('Send test alert to email:'); if(!email) return;
+            try{ const res = await fetch('/api/health/alert-test', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: email, admin_id: JSON.parse(localStorage.getItem('flb_user')||'{}').id }) }); if(res.ok) alert('Test alert sent (mock)'); else alert('Failed to send alert'); }catch(e){alert('Error')}
+        },
+        formatBytes(bytes){ if(!bytes && bytes !== 0) return '-'; const units = ['B','KB','MB','GB','TB']; let i = 0; let val = bytes; while(val >= 1024 && i < units.length-1){ val /= 1024; i++; } return val.toFixed( (i===0) ? 0 : 1) + ' ' + units[i]; },
+        formatUptime(sec){ if(!sec && sec !== 0) return '-'; const d = Math.floor(sec / 86400); sec %= 86400; const h = Math.floor(sec / 3600); sec %= 3600; const m = Math.floor(sec / 60); const s = Math.floor(sec % 60); if(d>0) return `${d}d ${h}h ${m}m`; if(h>0) return `${h}h ${m}m ${s}s`; if(m>0) return `${m}m ${s}s`; return `${s}s`; }
+    }
+}
+</script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+{% endblock %}

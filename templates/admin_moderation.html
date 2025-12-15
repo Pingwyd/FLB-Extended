@@ -11,16 +11,16 @@
                 <h3 class="text-lg leading-6 font-medium text-white">Reports</h3>
                 <p class="mt-1 max-w-2xl text-sm text-gray-400">Review and resolve user reports.</p>
             </div>
-            <button @click="fetchReports()" class="text-primary-500 hover:text-primary-400">
+            <button @click="fetchReports()" class="text-blue-400 hover:text-blue-300 transition-colors">
                 <i class="fas fa-sync-alt"></i> Refresh
             </button>
         </div>
         <div class="border-t border-gray-700">
             <ul role="list" class="divide-y divide-gray-700">
                 <template x-for="report in reports" :key="report.id">
-                    <li class="px-4 py-4 sm:px-6 hover:bg-gray-700 transition-colors duration-150">
+                    <li class="px-4 py-4 sm:px-6 hover:bg-gray-700/50 transition-colors duration-150">
                         <div class="flex items-center justify-between">
-                            <p class="text-sm font-medium text-primary-400 truncate" x-text="report.report_type.toUpperCase()"></p>
+                            <p class="text-sm font-medium text-blue-400 truncate" x-text="report.report_type.toUpperCase()"></p>
                             <div class="ml-2 flex-shrink-0 flex">
                                 <p class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
                                    :class="{
@@ -49,16 +49,16 @@
                             </div>
                         </div>
                         <div class="mt-4 flex justify-end space-x-3" x-show="report.status === 'pending'">
-                            <button @click="resolveReport(report.id, 'dismissed')" class="inline-flex items-center px-3 py-1 border border-gray-600 shadow-sm text-xs font-medium rounded text-gray-300 bg-gray-700 hover:bg-gray-600">
+                            <button @click="resolveReport(report.id, 'dismissed')" class="inline-flex items-center px-3 py-1 border border-gray-600 shadow-sm text-xs font-medium rounded text-gray-300 bg-gray-700 hover:bg-gray-600 transition-colors">
                                 Dismiss
                             </button>
-                            <button @click="resolveReport(report.id, 'resolved')" class="inline-flex items-center px-3 py-1 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-primary-600 hover:bg-primary-700">
+                            <button @click="resolveReport(report.id, 'resolved')" class="inline-flex items-center px-3 py-1 border border-transparent shadow-sm text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 transition-colors">
                                 Resolve
                             </button>
                         </div>
                     </li>
                 </template>
-                <li x-show="reports.length === 0" class="px-4 py-8 text-center text-gray-400">
+                <li x-show="reports.length === 0" class="px-4 py-8 text-center text-gray-500">
                     No reports found.
                 </li>
             </ul>
