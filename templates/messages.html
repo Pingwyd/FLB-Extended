@@ -1,97 +1,436 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="bg-gray-100 h-screen flex" x-data="messagesApp()">
-    <!-- Sidebar -->
-    <div class="w-1/3 bg-white border-r border-gray-200 flex flex-col">
-        <div class="p-4 border-b border-gray-200">
-            <h2 class="text-lg font-medium text-gray-900">Messages</h2>
+<div class="fixed inset-0 pt-20 bg-gray-950 text-gray-100 font-sans overflow-hidden" x-data="messagesApp()"
+    x-init="init()">
+
+    <!-- Vivid Background Elements (copied from Landing Page for consistency) -->
+    <div class="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+        <div
+            class="absolute top-0 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl filter opacity-40 animate-pulse">
         </div>
-        <div class="flex-1 overflow-y-auto">
-            <ul class="divide-y divide-gray-200">
-                <template x-for="conv in conversations" :key="conv.id">
-                    <li @click="selectConversation(conv)" class="px-4 py-4 hover:bg-gray-50 cursor-pointer" :class="{'bg-blue-50': activeConversation && activeConversation.id === conv.id}">
-                        <div class="flex items-center space-x-4">
-                            <div class="flex-shrink-0">
-                                <span class="inline-block h-10 w-10 rounded-full bg-gray-300"></span>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 truncate" x-text="conv.name"></p>
-                                <p class="text-sm text-gray-500 truncate" x-text="conv.lastMessage"></p>
-                            </div>
-                        </div>
-                    </li>
-                </template>
-            </ul>
+        <div
+            class="absolute bottom-0 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl filter opacity-40 animate-pulse delay-1000">
+        </div>
+        <!-- Grid Pattern -->
+        <div class="absolute inset-0 opacity-[0.03]"
+            style="background-image: linear-gradient(to right, #10b981 1px, transparent 1px), linear-gradient(to bottom, #10b981 1px, transparent 1px); background-size: 40px 40px;">
         </div>
     </div>
 
-    <!-- Chat Area -->
-    <div class="flex-1 flex flex-col">
-        <template x-if="activeConversation">
-            <div class="flex-1 flex flex-col h-full">
-                <!-- Header -->
-                <div class="p-4 border-b border-gray-200 bg-white flex justify-between items-center">
-                    <h3 class="text-lg font-medium text-gray-900" x-text="activeConversation.name"></h3>
-                </div>
+    <div class="relative z-10 flex h-full max-w-7xl mx-auto px-0 md:px-4 lg:px-8 pb-4 md:py-6 gap-6">
 
-                <!-- Messages -->
-                <div class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-                    <template x-for="msg in messages" :key="msg.id">
-                        <div class="flex" :class="msg.isMe ? 'justify-end' : 'justify-start'">
-                            <div class="max-w-xs lg:max-w-md px-4 py-2 rounded-lg shadow-sm" :class="msg.isMe ? 'bg-primary-600 text-white' : 'bg-white text-gray-900'">
-                                <p class="text-sm" x-text="msg.text"></p>
+        <!-- SIDEBAR: Conversation List -->
+        <div class="w-full md:w-80 lg:w-96 flex flex-col bg-gray-900/80 backdrop-blur-xl border border-gray-800 md:rounded-3xl shadow-2xl overflow-hidden transition-transform duration-300"
+            :class="{'hidden md:flex': activeConversation, 'flex h-full': !activeConversation}">
+
+            <!-- Sidebar Header -->
+            <div class="p-5 border-b border-gray-800 bg-gray-900/50">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+                        <span class="w-2 h-8 rounded-full bg-gradient-to-b from-emerald-400 to-cyan-500"></span>
+                        Messages
+                    </h2>
+                    <button
+                        @click="window.history.length > 1 ? window.history.back() : window.location.href='/dashboard'"
+                        class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-all"
+                        title="Go Dashboard">
+                        <i class="fas fa-home text-sm"></i>
+                    </button>
+                </div>
+                <!-- Search (Mock) -->
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                    <input type="text" placeholder="Search conversations..."
+                        class="w-full bg-gray-950/50 border border-gray-700 text-gray-200 text-sm rounded-xl pl-10 pr-4 py-2.5 focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 transition-all placeholder-gray-600">
+                </div>
+            </div>
+
+            <!-- List -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+                <template x-for="conv in conversations" :key="conv.partner_id">
+                    <div @click="selectConversation(conv)"
+                        class="p-3 rounded-2xl cursor-pointer transition-all duration-200 border border-transparent group"
+                        :class="{'bg-gray-800/80 border-emerald-500/30 shadow-lg shadow-emerald-900/10': activeConversation && activeConversation.partner_id === conv.partner_id, 'hover:bg-gray-800/40 hover:border-gray-700': !activeConversation || activeConversation.partner_id !== conv.partner_id}">
+
+                        <div class="flex items-center gap-4">
+                            <!-- Avatar -->
+                            <div class="relative flex-shrink-0">
+                                <template x-if="conv.partner_picture">
+                                    <img :src="conv.partner_picture"
+                                        class="h-12 w-12 rounded-full object-cover ring-2 ring-gray-800 group-hover:ring-emerald-500/50 transition-all">
+                                </template>
+                                <template x-if="!conv.partner_picture">
+                                    <div
+                                        class="h-12 w-12 rounded-full bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center ring-2 ring-gray-800 group-hover:ring-emerald-500/50 transition-all">
+                                        <span class="text-lg font-bold text-gray-400"
+                                            x-text="(conv.partner_name || '?')[0].toUpperCase()"></span>
+                                    </div>
+                                </template>
+                                <!-- Online Dot (Mock) -->
+                                <span
+                                    class="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-gray-900"></span>
+                            </div>
+
+                            <!-- Info -->
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-center mb-1">
+                                    <h3 class="text-sm font-bold text-gray-100 truncate group-hover:text-emerald-400 transition-colors"
+                                        x-text="conv.partner_name"></h3>
+                                    <span
+                                        class="text-[10px] uppercase font-bold text-gray-500 bg-gray-900/50 px-1.5 py-0.5 rounded"
+                                        x-text="formatDate(conv.last_message_time)"></span>
+                                </div>
+                                <p class="text-xs text-gray-400 truncate group-hover:text-gray-300 transition-colors"
+                                    x-text="conv.last_message_preview || 'Start a conversation...'"></p>
                             </div>
                         </div>
-                    </template>
-                </div>
+                    </div>
+                </template>
 
-                <!-- Input -->
-                <div class="p-4 bg-white border-t border-gray-200">
-                    <form @submit.prevent="sendMessage" class="flex space-x-4">
-                        <input type="text" x-model="newMessage" class="flex-1 focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md" placeholder="Type a message...">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
-                            Send
-                        </button>
-                    </form>
+                <!-- Loading State -->
+                <template x-if="loading">
+                    <div class="flex flex-col items-center justify-center py-10 text-gray-500 gap-3">
+                        <i class="fas fa-circle-notch fa-spin text-2xl text-emerald-500"></i>
+                        <span class="text-xs tracking-widest uppercase">Syncing...</span>
+                    </div>
+                </template>
+
+                <!-- Empty State -->
+                <template x-if="conversations.length === 0 && !loading">
+                    <div class="text-center py-12 px-6">
+                        <div
+                            class="w-16 h-16 bg-gray-800/50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-gray-700 border-dashed">
+                            <i class="far fa-comments text-3xl text-gray-600"></i>
+                        </div>
+                        <h3 class="text-gray-200 font-bold mb-2">No messages yet</h3>
+                        <p class="text-gray-500 text-sm">Connect with farmers and workers to start chatting.</p>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- MAIN CHAT AREA -->
+        <div class="flex-1 flex flex-col bg-gray-900/80 backdrop-blur-xl border border-gray-800 md:rounded-3xl shadow-2xl overflow-hidden relative"
+            :class="{'flex h-full fixed inset-0 z-50 md:static': activeConversation, 'hidden md:flex': !activeConversation}">
+
+            <template x-if="activeConversation">
+                <div class="flex flex-col h-full w-full">
+                    <!-- Chat Header -->
+                    <div
+                        class="h-20 px-6 border-b border-gray-800 bg-gray-900/80 backdrop-blur-md flex items-center justify-between z-20 shrink-0">
+                        <div class="flex items-center gap-4">
+                            <button @click="activeConversation = null"
+                                class="md:hidden w-8 h-8 flex items-center justify-center rounded-full bg-gray-800 text-gray-400 hover:text-white">
+                                <i class="fas fa-arrow-left"></i>
+                            </button>
+
+                            <div class="flex items-center gap-3">
+                                <div class="relative">
+                                    <template x-if="activeConversation.partner_picture">
+                                        <img :src="activeConversation.partner_picture"
+                                            class="h-10 w-10 rounded-full object-cover ring-2 ring-emerald-500/30">
+                                    </template>
+                                    <template x-if="!activeConversation.partner_picture">
+                                        <div
+                                            class="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center ring-2 ring-emerald-500/30">
+                                            <span class="font-bold text-white text-sm"
+                                                x-text="(activeConversation.partner_name || '?')[0].toUpperCase()"></span>
+                                        </div>
+                                    </template>
+                                    <span
+                                        class="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-gray-900"></span>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-white text-lg leading-tight"
+                                        x-text="activeConversation.partner_name"></h3>
+                                    <p class="text-xs text-emerald-400 font-medium">Online Now</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Header Actions -->
+                        <div class="flex items-center gap-2">
+                            <a :href="'/profile/' + activeConversation.partner_id"
+                                class="p-2 text-gray-400 hover:text-white transition-colors" title="View Profile">
+                                <i class="far fa-user"></i>
+                            </a>
+                            <button class="p-2 text-gray-400 hover:text-white transition-colors">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Messages Feed -->
+                    <div id="messages-container"
+                        class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 relative custom-scrollbar">
+                        <!-- Date Separator Mock -->
+                        <div class="flex justify-center">
+                            <span
+                                class="px-3 py-1 bg-gray-800/50 rounded-full text-[10px] font-bold text-gray-500 uppercase tracking-widest border border-gray-700/50">Today</span>
+                        </div>
+
+                        <template x-for="msg in activeConversation.messages" :key="msg.id || msg.temp_id">
+                            <div class="flex w-full group"
+                                :class="msg.sender_id === user.id ? 'justify-end' : 'justify-start'">
+                                <div class="max-w-[80%] md:max-w-[70%] flex flex-col"
+                                    :class="msg.sender_id === user.id ? 'items-end' : 'items-start'">
+
+                                    <!-- Message Bubble -->
+                                    <div class="px-5 py-3.5 text-[15px] leading-relaxed shadow-lg relative transition-all duration-200 hover:scale-[1.01]"
+                                        :class="msg.sender_id === user.id ? 
+                                            'bg-gradient-to-br from-emerald-600 to-cyan-700 text-white rounded-2xl rounded-tr-sm border border-emerald-500/20' : 
+                                            'bg-gray-800/80 backdrop-blur-sm text-gray-200 rounded-2xl rounded-tl-sm border border-gray-700'">
+                                        <p x-text="msg.content" class="whitespace-pre-wrap font-light"></p>
+                                    </div>
+
+                                    <!-- Timestamp -->
+                                    <span
+                                        class="text-[10px] text-gray-600 mt-1.5 px-1 font-medium opactiy-0 group-hover:opacity-100 transition-opacity"
+                                        x-text="formatTime(msg.created_at)"></span>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- Anchor for auto-scroll -->
+                        <div id="scroll-anchor"></div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="p-4 md:p-6 bg-gray-900/90 border-t border-gray-800 shrink-0 z-20">
+                        <form @submit.prevent="sendMessage" class="relative max-w-4xl mx-auto flex items-end gap-3">
+                            <div
+                                class="flex-1 bg-gray-950/50 border border-gray-700 rounded-2xl flex items-center p-1.5 focus-within:ring-2 focus-within:ring-emerald-500/50 focus-within:border-emerald-500 transition-all shadow-inner">
+                                <button type="button"
+                                    class="p-2 text-gray-500 hover:text-emerald-400 transition-colors rounded-xl hover:bg-gray-800">
+                                    <i class="fas fa-paperclip"></i>
+                                </button>
+                                <input type="text" x-model="newMessage"
+                                    class="flex-1 bg-transparent border-none text-white placeholder-gray-600 focus:ring-0 px-3 py-2 text-sm"
+                                    placeholder="Type your message..." required>
+                                <button type="button"
+                                    class="p-2 text-gray-500 hover:text-emerald-400 transition-colors rounded-xl hover:bg-gray-800">
+                                    <i class="far fa-smile"></i>
+                                </button>
+                            </div>
+
+                            <button type="submit"
+                                class="h-12 w-12 rounded-2xl bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 shadow-lg shadow-emerald-500/20 flex items-center justify-center text-white transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
+                                :disabled="sending || !newMessage.trim()">
+                                <i class="fas fa-paper-plane text-lg"
+                                    :class="{'fa-spin fa-spinner': sending, 'fa-paper-plane': !sending}"></i>
+                            </button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-        </template>
-        <template x-if="!activeConversation">
-            <div class="flex-1 flex items-center justify-center bg-gray-50">
-                <p class="text-gray-500">Select a conversation to start messaging</p>
-            </div>
-        </template>
+            </template>
+
+            <!-- EMPTY STATE (No Conversation Selected) -->
+            <template x-if="!activeConversation">
+                <div class="flex-1 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
+                    <!-- Decorative Background -->
+                    <div
+                        class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-emerald-900/20 via-gray-900/0 to-gray-900/0 pointer-events-none">
+                    </div>
+
+                    <div class="relative z-10 animate-fade-in-up">
+                        <div
+                            class="w-24 h-24 bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-3xl flex items-center justify-center mx-auto mb-8 ring-1 ring-white/10 shadow-[0_0_50px_-12px_rgba(16,185,129,0.3)] backdrop-blur-sm">
+                            <i class="fas fa-comments text-5xl text-emerald-400 drop-shadow-md"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold text-white mb-4 tracking-tight">Farmly Messenger</h2>
+                        <p class="text-gray-400 max-w-md mx-auto text-lg leading-relaxed">
+                            Select a conversation from the sidebar to start chatting, or browse the
+                            <a href="/workers-directory"
+                                class="text-emerald-400 hover:text-emerald-300 font-medium underline decoration-emerald-500/30 hover:decoration-emerald-500 transition-all">Workers
+                                Directory</a>
+                            to find talent.
+                        </p>
+                    </div>
+                </div>
+            </template>
+        </div>
     </div>
 </div>
 
 <script>
     function messagesApp() {
         return {
-            conversations: [
-                { id: 1, name: 'John Doe', lastMessage: 'Is the land still available?' },
-                { id: 2, name: 'Jane Smith', lastMessage: 'I can start next week.' }
-            ],
+            user: JSON.parse(localStorage.getItem('flb_user') || '{}'),
+            conversations: [],
             activeConversation: null,
-            messages: [],
             newMessage: '',
-            
+            loading: true,
+            sending: false,
+
+            async init() {
+                if (!this.user.id) {
+                    window.location.href = '/login-page';
+                    return;
+                }
+
+                // Adjust body for fixed layout
+                document.body.classList.add('overflow-hidden');
+
+                await this.fetchMessages();
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const recipientId = urlParams.get('recipient_id');
+                if (recipientId) {
+                    await this.openChatWithUser(parseInt(recipientId));
+                }
+            },
+
+            async fetchMessages() {
+                this.loading = true;
+                try {
+                    const res = await fetch(`/messages/${this.user.id}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        this.processConversations(data.sent, data.received);
+                    }
+                } catch (e) {
+                    console.error('Error fetching messages:', e);
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            processConversations(sent, received) {
+                const all = [...sent, ...received].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+                const convMap = new Map();
+
+                all.forEach(msg => {
+                    const isSender = msg.sender_id === this.user.id;
+                    const partnerId = isSender ? msg.recipient_id : msg.sender_id;
+                    const partnerName = isSender ? msg.recipient_name : msg.sender_name;
+                    const partnerPic = isSender ? msg.recipient_picture : msg.sender_picture;
+
+                    if (!convMap.has(partnerId)) {
+                        convMap.set(partnerId, {
+                            partner_id: partnerId,
+                            partner_name: partnerName || 'Unknown User',
+                            partner_picture: partnerPic,
+                            messages: [],
+                            last_message_time: null,
+                            last_message_preview: ''
+                        });
+                    }
+
+                    const conv = convMap.get(partnerId);
+                    conv.messages.push(msg);
+                    conv.last_message_time = msg.created_at;
+                    conv.last_message_preview = msg.content;
+
+                    if (partnerName && conv.partner_name === 'Unknown User') {
+                        conv.partner_name = partnerName;
+                        conv.partner_picture = partnerPic;
+                    }
+                });
+
+                this.conversations = Array.from(convMap.values()).sort((a, b) =>
+                    new Date(b.last_message_time) - new Date(a.last_message_time)
+                );
+            },
+
             selectConversation(conv) {
                 this.activeConversation = conv;
-                // Mock fetching messages
-                this.messages = [
-                    { id: 1, text: 'Hello!', isMe: false },
-                    { id: 2, text: 'Hi there, how can I help?', isMe: true }
-                ];
+                this.scrollToBottom();
             },
-            sendMessage() {
-                if (!this.newMessage.trim()) return;
-                this.messages.push({
-                    id: Date.now(),
-                    text: this.newMessage,
-                    isMe: true
+
+            scrollToBottom() {
+                this.$nextTick(() => {
+                    const container = document.getElementById('messages-container');
+                    if (container) {
+                        container.scrollTop = container.scrollHeight;
+                    }
                 });
-                this.newMessage = '';
+            },
+
+            async sendMessage() {
+                if (!this.newMessage.trim() || !this.activeConversation) return;
+
+                this.sending = true;
+                const payload = {
+                    sender_id: this.user.id,
+                    recipient_id: this.activeConversation.partner_id,
+                    content: this.newMessage
+                };
+
+                try {
+                    const res = await fetch('/messages/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (res.ok) {
+                        const savedMsg = await res.json();
+                        this.activeConversation.messages.push(savedMsg);
+                        this.activeConversation.last_message_time = savedMsg.created_at;
+                        this.activeConversation.last_message_preview = savedMsg.content;
+
+                        // Move conversation to top
+                        this.conversations.sort((a, b) => new Date(b.last_message_time) - new Date(a.last_message_time));
+
+                        this.newMessage = '';
+                        this.scrollToBottom();
+                    } else {
+                        const err = await res.json();
+                        alert('Failed to send: ' + (err.error || 'Unknown error'));
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert('Error sending message');
+                } finally {
+                    this.sending = false;
+                }
+            },
+
+            async openChatWithUser(userId) {
+                let existing = this.conversations.find(c => c.partner_id === userId);
+                if (existing) {
+                    this.selectConversation(existing);
+                } else {
+                    try {
+                        const res = await fetch(`/api/users/${userId}`);
+                        if (res.ok) {
+                            const userData = await res.json();
+                            const newConv = {
+                                partner_id: userData.id,
+                                partner_name: userData.full_name,
+                                partner_picture: userData.profile_picture,
+                                messages: [],
+                                last_message_time: new Date().toISOString(),
+                                last_message_preview: 'New conversation'
+                            };
+                            if (!this.conversations.find(c => c.partner_id === userId)) {
+                                this.conversations.unshift(newConv);
+                            }
+                            this.selectConversation(newConv);
+                        }
+                    } catch (e) {
+                        console.error('Could not load user for new chat', e);
+                    }
+                }
+            },
+
+            formatDate(isoString) {
+                if (!isoString) return '';
+                const date = new Date(isoString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+                if (diffDays === 0) return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                if (diffDays === 1) return 'Yesterday';
+                if (diffDays < 7) return date.toLocaleDateString([], { weekday: 'short' });
+                return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+            },
+
+            formatTime(isoString) {
+                if (!isoString) return '';
+                return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             }
         }
     }

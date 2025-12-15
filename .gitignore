@@ -150,7 +150,9 @@ Thumbs.db
 Dockerfile
 
 #txt
-
-
+concept.txt
+requirements.txt
+implement.md
+not_yet_implemented.md
 Uniformity.md
 Tasks.md

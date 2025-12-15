@@ -4,7 +4,8 @@
 <div class="bg-gray-50 dark:bg-gray-900 min-h-screen py-8" x-data="jobDetail()">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="mb-4">
-            <button @click="window.history.back()" class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none">
+            <button @click="window.history.back()"
+                class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 focus:outline-none">
                 <i class="fas fa-arrow-left mr-2"></i> Back
             </button>
         </div>
@@ -20,6 +21,12 @@
                         <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" x-text="job.title"></h3>
                         <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400"
                             x-text="job.location || 'Remote'"></p>
+                        <p class="mt-1 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+                            Employer: <a :href="`/profile/${job.employer_id}`"
+                                class="text-emerald-600 hover:underline font-medium" x-text="job.employer_name"></a>
+                            <i x-show="job.employer_verified" class="fas fa-check-circle text-blue-500 ml-1"
+                                title="Verified"></i>
+                        </p>
                     </div>
                 </div>
                 <div>
@@ -58,7 +65,7 @@
             </div>
             <div
                 class="px-4 py-3 bg-gray-50 dark:bg-gray-700/50 text-right sm:px-6 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
-                
+
                 <!-- Employer View -->
                 <template x-if="isEmployer">
                     <button @click="openApplicationsModal"
@@ -87,7 +94,8 @@
                 <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
             </div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
                 <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <div class="sm:flex sm:items-start">
                         <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
@@ -98,7 +106,9 @@
                                 <p class="text-sm text-gray-500 dark:text-gray-400">
                                     Introduce yourself and explain why you're a good fit for this job.
                                 </p>
-                                <textarea x-model="coverLetter" rows="5" class="mt-2 shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white" placeholder="Write your cover letter here..."></textarea>
+                                <textarea x-model="coverLetter" rows="5"
+                                    class="mt-2 shadow-sm focus:ring-green-500 focus:border-green-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                                    placeholder="Write your cover letter here..."></textarea>
                             </div>
                         </div>
                     </div>
@@ -125,37 +135,44 @@
                 <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
             </div>
             <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <div
+                class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
                 <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                     <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4">
                         Applications for <span x-text="job.title"></span>
                     </h3>
-                    
+
                     <div x-show="isLoadingApplications" class="text-center py-4">
                         <i class="fas fa-spinner fa-spin text-2xl text-green-600"></i>
                     </div>
 
-                    <div x-show="!isLoadingApplications && applications.length === 0" class="text-center py-4 text-gray-500">
+                    <div x-show="!isLoadingApplications && applications.length === 0"
+                        class="text-center py-4 text-gray-500">
                         No applications yet.
                     </div>
 
-                    <div x-show="!isLoadingApplications && applications.length > 0" class="space-y-4 max-h-96 overflow-y-auto">
+                    <div x-show="!isLoadingApplications && applications.length > 0"
+                        class="space-y-4 max-h-96 overflow-y-auto">
                         <template x-for="app in applications" :key="app.id">
                             <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <h4 class="text-sm font-bold text-gray-900 dark:text-white">Applicant ID: <span x-text="app.applicant_id"></span></h4>
+                                        <h4 class="text-sm font-bold text-gray-900 dark:text-white">Applicant ID: <span
+                                                x-text="app.applicant_id"></span></h4>
                                         <p class="text-xs text-gray-500" x-text="formatDate(app.created_at)"></p>
                                     </div>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                    <span
+                                        class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                                         :class="{'bg-yellow-100 text-yellow-800': app.status === 'pending', 'bg-green-100 text-green-800': app.status === 'accepted', 'bg-red-100 text-red-800': app.status === 'rejected'}"
                                         x-text="app.status"></span>
                                 </div>
                                 <div class="mt-2">
-                                    <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line" x-text="app.cover_letter"></p>
+                                    <p class="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line"
+                                        x-text="app.cover_letter"></p>
                                 </div>
                                 <div class="mt-3 flex space-x-2">
-                                    <a :href="`/profile/${app.applicant_id}`" target="_blank" class="text-xs text-blue-600 hover:underline">View Profile</a>
+                                    <a :href="`/profile/${app.applicant_id}`" target="_blank"
+                                        class="text-xs text-blue-600 hover:underline">View Profile</a>
                                 </div>
                             </div>
                         </template>

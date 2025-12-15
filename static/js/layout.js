@@ -3,12 +3,13 @@ document.addEventListener('alpine:init', () => {
         mobileMenuOpen: false,
         isLoggedIn: localStorage.getItem('is_logged_in') === 'true',
         user: JSON.parse(localStorage.getItem('flb_user') || '{}'),
-        
+
         logout() {
             localStorage.removeItem('is_logged_in');
             localStorage.removeItem('flb_user');
             localStorage.removeItem('access_token');
             localStorage.removeItem('user_email');
+            localStorage.removeItem('user'); // Legacy key cleanup
             this.isLoggedIn = false;
             window.location.href = '/';
         }
@@ -18,22 +19,22 @@ document.addEventListener('alpine:init', () => {
 // Page Transition Logic
 document.addEventListener('DOMContentLoaded', () => {
     const mainContent = document.getElementById('main-content');
-    
+
     document.body.addEventListener('click', (e) => {
         // Find the closest anchor tag
         const link = e.target.closest('a');
         if (!link) return;
-        
+
         const href = link.getAttribute('href');
         const target = link.getAttribute('target');
-        
+
         // Ignore special links
-        if (!href || 
-            href.startsWith('#') || 
-            href.startsWith('javascript:') || 
+        if (!href ||
+            href.startsWith('#') ||
+            href.startsWith('javascript:') ||
             href.startsWith('mailto:') ||
             href.startsWith('tel:') ||
-            target === '_blank' || 
+            target === '_blank' ||
             e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
             return;
         }

@@ -87,10 +87,11 @@ def create_app():
     )
 
     # Initialize Limiter
+    # Increased limits to account for messaging and dynamic content loading
     limiter = Limiter(
         get_remote_address,
         app=app,
-        default_limits=["200 per day", "100 per hour"],
+        default_limits=["2000 per day", "500 per hour"],
         storage_uri=os.environ.get('RATELIMIT_STORAGE_URI', 'memory://')
     )
 
@@ -103,7 +104,7 @@ def create_app():
         SWAGGER_URL,
         API_URL,
         config={
-            'app_name': "FLB Extended API"
+            'app_name': "Farmly API"
         }
     )
     app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
@@ -541,6 +542,10 @@ def create_app():
     def profile_settings_page():
         return render_template('profile_settings.html')
 
+    @app.route('/profile/<int:user_id>')
+    def public_profile_page(user_id):
+        return render_template('public_profile.html', profile_id=user_id)
+
     @app.route('/workers/<int:id>')
     def worker_detail_page(id):
         return render_template('worker_detail.html')
@@ -553,9 +558,7 @@ def create_app():
     def reviews_page():
         return render_template('reviews.html')
 
-    @app.route('/profile/<int:id>')
-    def public_profile_page(id):
-        return render_template('public_profile.html')
+
 
     @app.route('/messages')
     def messages_page():
@@ -1088,7 +1091,7 @@ def create_app():
             return jsonify({'error': 'email required'}), 400
         # synthesize a sample alert
         subject = 'Test: System Health Alert'
-        body = 'This is a test alert from FLB Extended system health.\n\n'
+        body = 'This is a test alert from Farmly system health.\n\n'
         try:
             # include current health snapshot
             res = requests.get(request.url_root.rstrip('/') + '/health')
@@ -1501,16 +1504,84 @@ def create_app():
             return jsonify({'error': 'database not available'}), 503
 
         session = session_local()
+
+        def format_message(msg):
+            data = msg.to_dict()
+            # Add sender details
+            if msg.sender:
+                data['sender_name'] = msg.sender.full_name
+                data['sender_picture'] = msg.sender.profile_picture
+            # Add recipient details
+            if msg.recipient:
+                data['recipient_name'] = msg.recipient.full_name
+                data['recipient_picture'] = msg.recipient.profile_picture
+            return data
         
         # Get messages where user is sender or recipient
-        sent = session.query(message_model).filter_by(sender_id=user_id).all()
-        received = session.query(message_model).filter_by(recipient_id=user_id).all()
+        # Use joinedload to avoid N+1 queries and DetachedInstanceError
+        sent = session.query(message_model).options(
+            joinedload(message_model.sender),
+            joinedload(message_model.recipient)
+        ).filter_by(sender_id=user_id).all()
+
+        received = session.query(message_model).options(
+            joinedload(message_model.sender),
+            joinedload(message_model.recipient)
+        ).filter_by(recipient_id=user_id).all()
+        
+        # Convert to dicts BEFORE closing session to ensure all data is loaded
+        # Although joinedload handles the relationships, accessing them to serialize is safest while session is open
+        sent_data = [format_message(msg) for msg in sent]
+        received_data = [format_message(msg) for msg in received]
+
         session.close()
 
         return jsonify({
-            'sent': [msg.to_dict() for msg in sent],
-            'received': [msg.to_dict() for msg in received]
+            'sent': sent_data,
+            'received': received_data
         }), 200
+
+
+
+    @app.route('/api/users/<int:user_id>', methods=['GET'])
+    def get_public_profile(user_id):
+        """Get public profile details for a user"""
+        if not db_available or session_local is None or user_model is None:
+            return jsonify({'error': 'database not available'}), 503
+
+        session = session_local()
+        user = session.query(user_model).filter_by(id=user_id).first()
+        
+        if not user:
+            session.close()
+            return jsonify({'error': 'User not found'}), 404
+
+        # If user is worker, fetch worker profile
+        worker_profile = None
+        if user.account_type == 'worker' and worker_profile_model:
+            worker_profile = session.query(worker_profile_model).filter_by(user_id=user.id).first()
+        
+        # Public data only
+        data = {
+            'id': user.id,
+            'full_name': user.full_name,
+            'account_type': user.account_type,
+            'profile_picture': user.profile_picture,
+            'bio': user.bio,
+            'location': user.location,
+            'verified': user.verified,
+            'created_at': user.created_at.isoformat() if user.created_at else None
+        }
+
+        if worker_profile:
+            data['worker_profile'] = worker_profile.to_dict()
+
+        session.close()
+        return jsonify(data), 200
+
+    @app.route('/profile/<int:user_id>')
+    def public_profile_page(user_id):
+        return render_template('public_profile.html', profile_id=user_id)
 
     @app.route('/messages/<int:message_id>/read', methods=['PUT'])
     def mark_message_read(message_id):
@@ -1927,7 +1998,7 @@ def create_app():
             return jsonify({'error': 'database not available'}), 503
 
         session = session_local()
-        query = session.query(listing_model)
+        query = session.query(listing_model).options(joinedload(listing_model.owner))
 
         # Apply filters from query parameters
         listing_type = request.args.get('listing_type')
@@ -1989,9 +2060,11 @@ def create_app():
             query = query.order_by(listing_model.created_at.desc())
 
         listings = query.all()
+        # Serialize before closing session
+        result = [listing.to_dict() for listing in listings]
         session.close()
 
-        return jsonify([listing.to_dict() for listing in listings]), 200
+        return jsonify(result), 200
 
     @app.route('/listings/<int:listing_id>', methods=['GET'])
     def get_listing(listing_id):
@@ -2000,7 +2073,7 @@ def create_app():
             return jsonify({'error': 'database not available'}), 503
 
         session = session_local()
-        listing = session.query(listing_model).filter_by(id=listing_id).first()
+        listing = session.query(listing_model).options(joinedload(listing_model.owner)).filter_by(id=listing_id).first()
 
         if not listing:
             session.close()
@@ -2227,9 +2300,11 @@ def create_app():
             query = query.order_by(worker_profile_model.is_boosted.desc(), worker_profile_model.rating.desc(), worker_profile_model.total_jobs.desc())
 
         workers = query.all()
+        # Serialize before closing
+        result = [worker.to_dict() for worker in workers]
         session.close()
 
-        return jsonify([worker.to_dict() for worker in workers]), 200
+        return jsonify(result), 200
 
     @app.route('/workers/<int:worker_id>', methods=['GET'])
     def get_worker(worker_id):
@@ -4624,7 +4699,7 @@ def create_app():
             
         session = session_local()
         try:
-            query = session.query(job_model)
+            query = session.query(job_model).options(joinedload(job_model.employer))
             
             # Search query
             search_q = request.args.get('q')
@@ -4646,7 +4721,9 @@ def create_app():
                 query = query.order_by(job_model.created_at.desc())
                 
             jobs = query.all()
-            return jsonify([job.to_dict() for job in jobs])
+            # Serialize before closing session
+            result = [job.to_dict() for job in jobs]
+            return jsonify(result)
         except Exception as e:
             return jsonify({'error': str(e)}), 500
         finally:
@@ -4659,7 +4736,7 @@ def create_app():
             
         session = session_local()
         try:
-            job = session.query(job_model).filter_by(id=id).first()
+            job = session.query(job_model).options(joinedload(job_model.employer)).filter_by(id=id).first()
             if not job:
                 return jsonify({'error': 'Job not found'}), 404
             return jsonify(job.to_dict())
@@ -4808,7 +4885,7 @@ def create_app():
             
         session = session_local()
         try:
-            query = session.query(worker_profile_model).join(user_model)
+            query = session.query(worker_profile_model).join(user_model).options(joinedload(worker_profile_model.user))
             
             # Search query
             search_q = request.args.get('q')
@@ -4836,7 +4913,9 @@ def create_app():
                 query = query.order_by(worker_profile_model.is_boosted.desc(), worker_profile_model.rating.desc())
                 
             workers = query.all()
-            return jsonify([worker.to_dict() for worker in workers])
+            # Serialize while session is still open
+            result = [worker.to_dict() for worker in workers]
+            return jsonify(result)
         except Exception as e:
             return jsonify({'error': str(e)}), 500
         finally:

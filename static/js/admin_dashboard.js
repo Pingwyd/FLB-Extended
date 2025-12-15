@@ -13,6 +13,7 @@ function adminDashboard() {
             currency: 'NGN'
         },
         recentActivity: [],
+        recentMessages: [],
         showNotifications: false,
         unreadCount: 0,
         isLoading: true,
@@ -32,9 +33,10 @@ function adminDashboard() {
             await Promise.all([
                 this.fetchStats(),
                 this.fetchWallet(),
-                this.fetchRecentActivity()
+                this.fetchRecentActivity(),
+                this.fetchRecentMessages()
             ]);
-            
+
             this.isLoading = false;
         },
 
@@ -45,17 +47,17 @@ function adminDashboard() {
                         'Content-Type': 'application/json'
                     }
                 });
-                
+
                 const text = await res.text();
-                try{
+                try {
                     const payload = text ? JSON.parse(text) : null;
-                    if(res.ok && payload){
+                    if (res.ok && payload) {
                         this.stats = payload;
                         console.debug('Fetched admin stats:', payload);
                     } else {
                         console.warn('Failed to fetch admin stats, status=', res.status, 'body=', payload);
                     }
-                }catch(e){
+                } catch (e) {
                     console.error('Failed to parse /api/admin/stats response', e, 'raw=', text);
                 }
             } catch (error) {
@@ -87,7 +89,7 @@ function adminDashboard() {
                         admin_id: this.user.id
                     })
                 });
-                
+
                 if (res.ok) {
                     this.recentActivity = await res.json();
                     // Compute unread/unseen count if server provides an unread/seen flag
@@ -140,14 +142,53 @@ function adminDashboard() {
                 }
             }
         },
-        
+
+        async fetchRecentMessages() {
+            try {
+                // Use a different API or same one if it works for admins? 
+                // Currently /messages/<user_id> works for any user_id if valid session.
+                // Admin can see their own messages.
+                const res = await fetch(`/messages/${this.user.id}`);
+                if (res.ok) {
+                    const data = await res.json();
+
+                    // Process messages to find recent conversations
+                    const all = [...data.sent, ...data.received].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    const uniquePartners = new Map();
+
+                    all.forEach(msg => {
+                        const isSender = msg.sender_id === this.user.id;
+                        const partnerId = isSender ? msg.recipient_id : msg.sender_id;
+
+                        if (!uniquePartners.has(partnerId)) {
+                            // Use enriched data
+                            const partnerName = isSender ? msg.recipient_name : msg.sender_name;
+                            const partnerPic = isSender ? msg.recipient_picture : msg.sender_picture;
+
+                            uniquePartners.set(partnerId, {
+                                partner_id: partnerId,
+                                partner_name: partnerName || 'Unknown User',
+                                partner_picture: partnerPic,
+                                last_message: msg.content,
+                                time: msg.created_at
+                            });
+                        }
+                    });
+
+                    this.recentMessages = Array.from(uniquePartners.values()).slice(0, 3);
+                }
+            } catch (e) {
+                console.error('Error fetching recent messages:', e);
+            }
+        },
+
         logout() {
             // Clear local client state and call server logout endpoint to clear server session
             localStorage.removeItem('is_logged_in');
             localStorage.removeItem('flb_user');
             try {
-                fetch('/logout', { method: 'GET', credentials: 'same-origin' }).catch(()=>{});
-            } catch (e) {}
+                fetch('/logout', { method: 'GET', credentials: 'same-origin' }).catch(() => { });
+            } catch (e) { }
             window.location.href = '/login-page';
         }
     }

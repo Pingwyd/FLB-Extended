@@ -11,7 +11,8 @@ function dashboard() {
             rating: 0
         },
         recentApplications: [],
-        
+        recentMessages: [],
+
         // Task Management
         tasks: [],
         isLoadingTasks: false,
@@ -45,6 +46,9 @@ function dashboard() {
                 if (this.user.account_type === 'worker') {
                     await this.loadWorkerData();
                 }
+
+                // Fetch messages for everyone
+                await this.fetchRecentMessages();
             }
         },
 
@@ -169,6 +173,42 @@ function dashboard() {
                 }
             } catch (e) {
                 console.error(e);
+            }
+        },
+
+        async fetchRecentMessages() {
+            try {
+                const res = await fetch(`/messages/${this.user.id}`);
+                if (res.ok) {
+                    const data = await res.json();
+
+                    // Process messages to find recent conversations
+                    const all = [...data.sent, ...data.received].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    const uniquePartners = new Map();
+
+                    all.forEach(msg => {
+                        const isSender = msg.sender_id === this.user.id;
+                        const partnerId = isSender ? msg.recipient_id : msg.sender_id;
+
+                        if (!uniquePartners.has(partnerId)) {
+                            // Use enriched data
+                            const partnerName = isSender ? msg.recipient_name : msg.sender_name;
+                            const partnerPic = isSender ? msg.recipient_picture : msg.sender_picture;
+
+                            uniquePartners.set(partnerId, {
+                                partner_id: partnerId,
+                                partner_name: partnerName || 'Unknown User',
+                                partner_picture: partnerPic,
+                                last_message: msg.content,
+                                time: msg.created_at
+                            });
+                        }
+                    });
+
+                    this.recentMessages = Array.from(uniquePartners.values()).slice(0, 3);
+                }
+            } catch (e) {
+                console.error('Error fetching recent messages:', e);
             }
         }
     }

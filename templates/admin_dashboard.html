@@ -4,149 +4,194 @@
 {% block header_title %}Dashboard{% endblock %}
 
 {% block content %}
-    <!-- Business Account Balance -->
-    <div class="bg-gray-900 mb-8">
-        <p class="text-sm text-gray-400 mb-1">Business Account Balance (Fees Collected)</p>
-        <h2 class="text-4xl font-bold text-white mb-2" x-text="formatCurrency(stats.total_revenue)">₦0.00</h2>
-        <div class="flex items-center gap-4 mb-2">
-            <a href="/wallet" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-md text-sm font-medium border border-gray-700 transition-colors inline-block">
-                Manage Wallet
+<!-- Business Account Balance -->
+<div class="bg-gray-900 mb-8">
+    <p class="text-sm text-gray-400 mb-1">Business Account Balance (Fees Collected)</p>
+    <h2 class="text-4xl font-bold text-white mb-2" x-text="formatCurrency(stats.total_revenue)">₦0.00</h2>
+    <div class="flex items-center gap-4 mb-2">
+        <a href="/wallet"
+            class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-md text-sm font-medium border border-gray-700 transition-colors inline-block">
+            Manage Wallet
+        </a>
+        <span class="text-xs text-gray-500 flex items-center">
+            <i class="fas fa-info-circle mr-1"></i> Revenue from fees
+        </span>
+    </div>
+    <div>
+        <p class="text-sm text-gray-400 mb-1">Withdrawal Fees Collected</p>
+        <h3 class="text-xl font-semibold text-white" x-text="formatCurrency(stats.withdrawal_fees)">₦0.00</h3>
+    </div>
+</div>
+
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+    <!-- Total Users -->
+    <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 relative overflow-hidden">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm font-medium text-gray-400">Total Users</p>
+                <h3 class="text-2xl font-bold text-white mt-2" x-text="stats.users">0</h3>
+            </div>
+            <div class="p-2 bg-blue-900/30 rounded-md">
+                <i class="fas fa-users text-blue-400"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Jobs -->
+    <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 relative overflow-hidden">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm font-medium text-gray-400">Active Jobs</p>
+                <h3 class="text-2xl font-bold text-white mt-2" x-text="stats.jobs">0</h3>
+            </div>
+            <div class="p-2 bg-green-900/30 rounded-md">
+                <i class="fas fa-briefcase text-green-400"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Market Listings -->
+    <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 relative overflow-hidden">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm font-medium text-gray-400">Market Listings</p>
+                <h3 class="text-2xl font-bold text-white mt-2" x-text="stats.listings">0</h3>
+            </div>
+            <div class="p-2 bg-purple-900/30 rounded-md">
+                <i class="fas fa-store text-purple-400"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Verifications -->
+    <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 relative overflow-hidden">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm font-medium text-gray-400">Pending Verifications</p>
+                <h3 class="text-2xl font-bold text-white mt-2" x-text="stats.pending_verifications">0</h3>
+                <p class="text-xs text-gray-500 mt-1">
+                    <span x-text="stats.unverified_users">0</span> unverified users
+                </p>
+                <a href="/admin/users-page" class="text-xs text-gray-400 hover:text-white mt-2 inline-block">Review
+                    Requests →</a>
+            </div>
+            <div class="p-2 bg-yellow-900/30 rounded-md">
+                <i class="fas fa-user-clock text-yellow-400"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Messages Widget -->
+<div class="mb-8 bg-gray-800 border border-gray-700 rounded-lg overflow-hidden" x-show="recentMessages.length > 0">
+    <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+        <h3 class="text-lg font-medium text-white">Recent Messages</h3>
+        <a href="/messages" class="text-sm text-blue-400 hover:text-blue-300">View All</a>
+    </div>
+    <ul class="divide-y divide-gray-700">
+        <template x-for="msg in recentMessages" :key="msg.partner_id">
+            <li class="px-6 py-4 hover:bg-gray-700/50 transition-colors">
+                <a :href="'/messages?recipient_id=' + msg.partner_id" class="flex items-center space-x-4">
+                    <div class="flex-shrink-0">
+                        <template x-if="msg.partner_picture">
+                            <img :src="msg.partner_picture" class="h-10 w-10 rounded-full object-cover">
+                        </template>
+                        <template x-if="!msg.partner_picture">
+                            <span
+                                class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-600 text-gray-300">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </template>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-white truncate" x-text="msg.partner_name"></p>
+                        <p class="text-sm text-gray-400 truncate" x-text="msg.last_message"></p>
+                    </div>
+                    <div class="text-xs text-gray-500" x-text="formatDate(msg.time)"></div>
+                </a>
+            </li>
+        </template>
+    </ul>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Quick Actions -->
+    <div class="lg:col-span-2">
+        <h3 class="text-lg font-medium text-gray-300 mb-4">Quick Actions</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <a href="/admin/users-page"
+                class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors group">
+                <div
+                    class="h-12 w-12 rounded-full bg-blue-900/20 flex items-center justify-center mb-3 group-hover:bg-blue-900/40 transition-colors">
+                    <i class="fas fa-user-plus text-blue-400 text-xl"></i>
+                </div>
+                <span class="text-white font-medium">Manage Users</span>
             </a>
-            <span class="text-xs text-gray-500 flex items-center">
-                <i class="fas fa-info-circle mr-1"></i> Revenue from fees
-            </span>
-        </div>
-        <div>
-            <p class="text-sm text-gray-400 mb-1">Withdrawal Fees Collected</p>
-            <h3 class="text-xl font-semibold text-white" x-text="formatCurrency(stats.withdrawal_fees)">₦0.00</h3>
-        </div>
-    </div>
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-        <!-- Total Users -->
-        <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 relative overflow-hidden">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-sm font-medium text-gray-400">Total Users</p>
-                    <h3 class="text-2xl font-bold text-white mt-2" x-text="stats.users">0</h3>
+            <a href="/admin/moderation-page"
+                class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors group">
+                <div
+                    class="h-12 w-12 rounded-full bg-red-900/20 flex items-center justify-center mb-3 group-hover:bg-red-900/40 transition-colors">
+                    <i class="fas fa-gavel text-red-400 text-xl"></i>
                 </div>
-                <div class="p-2 bg-blue-900/30 rounded-md">
-                    <i class="fas fa-users text-blue-400"></i>
-                </div>
-            </div>
-        </div>
+                <span class="text-white font-medium">Moderation Queue</span>
+            </a>
 
-        <!-- Active Jobs -->
-        <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 relative overflow-hidden">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-sm font-medium text-gray-400">Active Jobs</p>
-                    <h3 class="text-2xl font-bold text-white mt-2" x-text="stats.jobs">0</h3>
+            <a href="/wallet"
+                class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors group">
+                <div
+                    class="h-12 w-12 rounded-full bg-green-900/20 flex items-center justify-center mb-3 group-hover:bg-green-900/40 transition-colors">
+                    <i class="fas fa-money-bill-wave text-green-400 text-xl"></i>
                 </div>
-                <div class="p-2 bg-green-900/30 rounded-md">
-                    <i class="fas fa-briefcase text-green-400"></i>
-                </div>
-            </div>
-        </div>
+                <span class="text-white font-medium">Transactions</span>
+            </a>
 
-        <!-- Market Listings -->
-        <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 relative overflow-hidden">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-sm font-medium text-gray-400">Market Listings</p>
-                    <h3 class="text-2xl font-bold text-white mt-2" x-text="stats.listings">0</h3>
+            <a href="/admin/verifications"
+                class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors group">
+                <div
+                    class="h-12 w-12 rounded-full bg-yellow-900/20 flex items-center justify-center mb-3 group-hover:bg-yellow-900/40 transition-colors">
+                    <i class="fas fa-user-check text-yellow-400 text-xl"></i>
                 </div>
-                <div class="p-2 bg-purple-900/30 rounded-md">
-                    <i class="fas fa-store text-purple-400"></i>
-                </div>
-            </div>
-        </div>
+                <span class="text-white font-medium">Verify Users</span>
+            </a>
 
-        <!-- Pending Verifications -->
-        <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 relative overflow-hidden">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="text-sm font-medium text-gray-400">Pending Verifications</p>
-                    <h3 class="text-2xl font-bold text-white mt-2" x-text="stats.pending_verifications">0</h3>
-                    <p class="text-xs text-gray-500 mt-1">
-                        <span x-text="stats.unverified_users">0</span> unverified users
-                    </p>
-                    <a href="/admin/users-page" class="text-xs text-gray-400 hover:text-white mt-2 inline-block">Review Requests →</a>
+            <a href="/admin/settings"
+                class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors group">
+                <div
+                    class="h-12 w-12 rounded-full bg-gray-700/50 flex items-center justify-center mb-3 group-hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-sliders-h text-gray-400 text-xl"></i>
                 </div>
-                <div class="p-2 bg-yellow-900/30 rounded-md">
-                    <i class="fas fa-user-clock text-yellow-400"></i>
-                </div>
-            </div>
+                <span class="text-white font-medium">System Settings</span>
+            </a>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Quick Actions -->
-        <div class="lg:col-span-2">
-            <h3 class="text-lg font-medium text-gray-300 mb-4">Quick Actions</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <a href="/admin/users-page" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors group">
-                    <div class="h-12 w-12 rounded-full bg-blue-900/20 flex items-center justify-center mb-3 group-hover:bg-blue-900/40 transition-colors">
-                        <i class="fas fa-user-plus text-blue-400 text-xl"></i>
-                    </div>
-                    <span class="text-white font-medium">Manage Users</span>
-                </a>
-                
-                <a href="/admin/moderation-page" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors group">
-                    <div class="h-12 w-12 rounded-full bg-red-900/20 flex items-center justify-center mb-3 group-hover:bg-red-900/40 transition-colors">
-                        <i class="fas fa-gavel text-red-400 text-xl"></i>
-                    </div>
-                    <span class="text-white font-medium">Moderation Queue</span>
-                </a>
-
-                <a href="/wallet" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors group">
-                    <div class="h-12 w-12 rounded-full bg-green-900/20 flex items-center justify-center mb-3 group-hover:bg-green-900/40 transition-colors">
-                        <i class="fas fa-money-bill-wave text-green-400 text-xl"></i>
-                    </div>
-                    <span class="text-white font-medium">Transactions</span>
-                </a>
-
-                <a href="/admin/verifications" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors group">
-                    <div class="h-12 w-12 rounded-full bg-yellow-900/20 flex items-center justify-center mb-3 group-hover:bg-yellow-900/40 transition-colors">
-                        <i class="fas fa-user-check text-yellow-400 text-xl"></i>
-                    </div>
-                    <span class="text-white font-medium">Verify Users</span>
-                </a>
-
-                <a href="/admin/settings" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors group">
-                    <div class="h-12 w-12 rounded-full bg-gray-700/50 flex items-center justify-center mb-3 group-hover:bg-gray-700 transition-colors">
-                        <i class="fas fa-sliders-h text-gray-400 text-xl"></i>
-                    </div>
-                    <span class="text-white font-medium">System Settings</span>
-                </a>
-            </div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div id="recent-activity">
-            <h3 class="text-lg font-medium text-gray-300 mb-4">Recent Activity</h3>
-            <div class="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden">
-                <ul class="divide-y divide-gray-700">
-                    <template x-for="activity in recentActivity" :key="activity.id">
-                        <li class="p-4 hover:bg-gray-700/50 transition-colors">
-                            <div class="flex space-x-3">
-                                <div class="flex-1 space-y-1">
-                                    <div class="flex items-center justify-between">
-                                        <h3 class="text-sm font-medium text-white" x-text="activity.action"></h3>
-                                        <p class="text-xs text-gray-500" x-text="formatDate(activity.created_at)"></p>
-                                    </div>
-                                    <p class="text-sm text-gray-400" x-text="activity.details || activity.target_type"></p>
-                                    <p class="text-xs text-gray-500">By: <span x-text="activity.admin_name || 'System'"></span></p>
+    <!-- Recent Activity -->
+    <div id="recent-activity">
+        <h3 class="text-lg font-medium text-gray-300 mb-4">Recent Activity</h3>
+        <div class="bg-gray-800 border border-gray-700 rounded-lg overflow-hidden">
+            <ul class="divide-y divide-gray-700">
+                <template x-for="activity in recentActivity" :key="activity.id">
+                    <li class="p-4 hover:bg-gray-700/50 transition-colors">
+                        <div class="flex space-x-3">
+                            <div class="flex-1 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <h3 class="text-sm font-medium text-white" x-text="activity.action"></h3>
+                                    <p class="text-xs text-gray-500" x-text="formatDate(activity.created_at)"></p>
                                 </div>
+                                <p class="text-sm text-gray-400" x-text="activity.details || activity.target_type"></p>
+                                <p class="text-xs text-gray-500">By: <span
+                                        x-text="activity.admin_name || 'System'"></span></p>
                             </div>
-                        </li>
-                    </template>
-                    <li x-show="recentActivity.length === 0" class="p-6 text-center text-gray-500">
-                        No recent activity found.
+                        </div>
                     </li>
-                </ul>
-            </div>
+                </template>
+                <li x-show="recentActivity.length === 0" class="p-6 text-center text-gray-500">
+                    No recent activity found.
+                </li>
+            </ul>
         </div>
     </div>
+</div>
 {% endblock %}

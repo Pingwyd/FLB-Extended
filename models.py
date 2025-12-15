@@ -243,7 +243,9 @@ class Listing(Base):
             'boost_expiry': self.boost_expiry.isoformat() if self.boost_expiry else None,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None,
-            'views': self.views
+            'views': self.views,
+            'owner_name': self.owner.full_name if self.owner else "Unknown",
+            'owner_verified': self.owner.verified if self.owner else False
         }
 
 
@@ -841,7 +843,9 @@ class Job(Base):
             'status': self.status,
             'is_boosted': self.is_boosted,
             'boost_expiry': self.boost_expiry.isoformat() if self.boost_expiry else None,
-            'created_at': self.created_at.isoformat() if self.created_at else None
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'employer_name': self.employer.full_name if self.employer else "Unknown",
+            'employer_verified': self.employer.verified if self.employer else False
         }
 
 
