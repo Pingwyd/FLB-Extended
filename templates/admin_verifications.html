@@ -1,6 +1,6 @@
 {% extends 'admin_base.html' %}
 
-{% block title %}User Verifications - FLB Admin{% endblock %}
+{% block title %}User Verifications - Farmly Admin{% endblock %}
 
 {% block header_title %}User Verifications{% endblock %}
 
@@ -18,18 +18,25 @@
 
         <div class="space-y-4">
             <template x-for="entry in verifications" :key="entry.doc.id">
-                <div class="p-3 border border-gray-100 dark:border-gray-700 rounded-lg flex items-start justify-between">
+                <div
+                    class="p-3 border border-gray-100 dark:border-gray-700 rounded-lg flex items-start justify-between">
                     <div>
-                        <div class="text-sm font-medium text-gray-900 dark:text-white" x-text="entry.user ? entry.user.full_name : 'Unknown User'"></div>
+                        <div class="text-sm font-medium text-gray-900 dark:text-white"
+                            x-text="entry.user ? entry.user.full_name : 'Unknown User'"></div>
                         <div class="text-xs text-gray-500" x-text="entry.user ? entry.user.email : ''"></div>
-                        <div class="mt-2 text-sm text-gray-500">Document: <span x-text="entry.doc.document_type"></span></div>
-                        <div class="mt-1 text-xs text-gray-400">Uploaded: <span x-text="entry.doc.created_at || entry.doc.created"></span></div>
+                        <div class="mt-2 text-sm text-gray-500">Document: <span x-text="entry.doc.document_type"></span>
+                        </div>
+                        <div class="mt-1 text-xs text-gray-400">Uploaded: <span
+                                x-text="entry.doc.created_at || entry.doc.created"></span></div>
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <button @click="viewDocs(entry.user.id)" class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm">View Docs</button>
-                        <button @click="review(entry.doc.id, 'approved')" class="px-3 py-1 bg-green-600 text-white rounded-md text-sm">Approve</button>
-                        <button @click="review(entry.doc.id, 'rejected')" class="px-3 py-1 bg-red-600 text-white rounded-md text-sm">Reject</button>
+                        <button @click="viewDocs(entry.user.id)"
+                            class="px-3 py-1 bg-blue-600 text-white rounded-md text-sm">View Docs</button>
+                        <button @click="review(entry.doc.id, 'approved')"
+                            class="px-3 py-1 bg-green-600 text-white rounded-md text-sm">Approve</button>
+                        <button @click="review(entry.doc.id, 'rejected')"
+                            class="px-3 py-1 bg-red-600 text-white rounded-md text-sm">Reject</button>
                     </div>
                 </div>
             </template>
@@ -38,54 +45,54 @@
 </div>
 
 <script>
-function verificationsApp() {
-    return {
-        user: JSON.parse(localStorage.getItem('flb_user') || '{}'),
-        verifications: [],
-        loading: true,
-        async init() {
-            if (!this.user || !this.user.id) {
-                window.location.href = '/login-page';
-                return;
-            }
-            await this.fetchVerifications();
-            this.loading = false;
-        },
-        async fetchVerifications() {
-            try {
-                const res = await fetch(`/api/admin/verifications?admin_id=${this.user.id}`);
-                if (res.ok) {
-                    this.verifications = await res.json();
-                } else {
-                    console.error('Failed to fetch verifications');
+    function verificationsApp() {
+        return {
+            user: JSON.parse(localStorage.getItem('flb_user') || '{}'),
+            verifications: [],
+            loading: true,
+            async init() {
+                if (!this.user || !this.user.id) {
+                    window.location.href = '/login-page';
+                    return;
                 }
-            } catch (e) {
-                console.error(e);
-            }
-        },
-        viewDocs(userId) {
-            const url = `/documents/${userId}?admin_id=${this.user.id}`;
-            window.open(url, '_blank');
-        },
-        async review(docId, status) {
-            try {
-                const res = await fetch(`/documents/verify/${docId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: status, admin_id: this.user.id })
-                });
-                if (res.ok) {
-                    await this.fetchVerifications();
-                } else {
-                    const body = await res.json();
-                    alert('Error: ' + (body.error || 'Unable to review document'));
+                await this.fetchVerifications();
+                this.loading = false;
+            },
+            async fetchVerifications() {
+                try {
+                    const res = await fetch(`/api/admin/verifications?admin_id=${this.user.id}`);
+                    if (res.ok) {
+                        this.verifications = await res.json();
+                    } else {
+                        console.error('Failed to fetch verifications');
+                    }
+                } catch (e) {
+                    console.error(e);
                 }
-            } catch (e) {
-                console.error(e);
+            },
+            viewDocs(userId) {
+                const url = `/documents/${userId}?admin_id=${this.user.id}`;
+                window.open(url, '_blank');
+            },
+            async review(docId, status) {
+                try {
+                    const res = await fetch(`/documents/verify/${docId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: status, admin_id: this.user.id })
+                    });
+                    if (res.ok) {
+                        await this.fetchVerifications();
+                    } else {
+                        const body = await res.json();
+                        alert('Error: ' + (body.error || 'Unable to review document'));
+                    }
+                } catch (e) {
+                    console.error(e);
+                }
             }
         }
     }
-}
 </script>
 
 {% endblock %}

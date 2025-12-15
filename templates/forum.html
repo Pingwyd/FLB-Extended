@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Community Forum - FLB Extended{% endblock %}
+{% block title %}Community Forum - Farmly{% endblock %}
 
 {% block content %}
 <div class="bg-transparent min-h-screen" x-data="forumApp()">
@@ -276,11 +276,11 @@
 
     <script>
         // Global helper functions for the recursive HTML generation
-        window.triggerReply = function(id) {
+        window.triggerReply = function (id) {
             window.dispatchEvent(new CustomEvent('trigger-reply', { detail: { id } }));
         };
 
-        window.submitReplyGlobal = function(id) {
+        window.submitReplyGlobal = function (id) {
             const input = document.getElementById(`reply-input-${id}`);
             if (input && input.value.trim()) {
                 window.dispatchEvent(new CustomEvent('submit-reply-global', { detail: { id, content: input.value } }));
@@ -288,17 +288,17 @@
             }
         };
 
-        window.expandComments = function(btn, commentsJson, depth) {
+        window.expandComments = function (btn, commentsJson, depth) {
             const comments = JSON.parse(decodeURIComponent(commentsJson));
             const container = btn.parentElement; // The div containing the button
-            
+
             // Remove the button
             btn.remove();
 
             // Render the hidden comments
             if (window.renderCommentsGlobal) {
                 const html = window.renderCommentsGlobal(comments, depth);
-                
+
                 // Append the new HTML
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = html;
@@ -309,85 +309,85 @@
         };
 
         function forumApp() {
-        return {
-        posts: [],
-        // ... existing properties ...
-        categories: [
-        { id: 'all', name: 'All Discussions' },
-        { id: 'general', name: 'General Discussion' },
-        { id: 'planting_advice', name: 'Planting Advice' },
-        { id: 'pest_control', name: 'Pest Control' },
-        { id: 'equipment', name: 'Equipment' },
-        { id: 'marketplace', name: 'Marketplace' }
-        ],
-        selectedCategory: 'all',
-        sortBy: 'recent',
-        isLoading: true,
-        showCreateModal: false,
-        selectedPost: null,
-        postComments: [],
-        newComment: '',
-        replyTo: null,
-        replyContent: '',
-        currentUser: null,
-        searchQuery: '',
-        newPost: {
-        title: '',
-        category: 'general',
-        content: ''
-        },
+            return {
+                posts: [],
+                // ... existing properties ...
+                categories: [
+                    { id: 'all', name: 'All Discussions' },
+                    { id: 'general', name: 'General Discussion' },
+                    { id: 'planting_advice', name: 'Planting Advice' },
+                    { id: 'pest_control', name: 'Pest Control' },
+                    { id: 'equipment', name: 'Equipment' },
+                    { id: 'marketplace', name: 'Marketplace' }
+                ],
+                selectedCategory: 'all',
+                sortBy: 'recent',
+                isLoading: true,
+                showCreateModal: false,
+                selectedPost: null,
+                postComments: [],
+                newComment: '',
+                replyTo: null,
+                replyContent: '',
+                currentUser: null,
+                searchQuery: '',
+                newPost: {
+                    title: '',
+                    category: 'general',
+                    content: ''
+                },
 
-        init() {
-        const userStr = localStorage.getItem('flb_user');
-        if (userStr) {
-        this.currentUser = JSON.parse(userStr);
-        }
-        this.fetchPosts();
+                init() {
+                    const userStr = localStorage.getItem('flb_user');
+                    if (userStr) {
+                        this.currentUser = JSON.parse(userStr);
+                    }
+                    this.fetchPosts();
 
-        // Event listener for reply trigger
-        window.addEventListener('trigger-reply', (e) => {
-        this.replyTo = (this.replyTo === e.detail.id ? null : e.detail.id);
-        if (this.replyTo) {
-        this.$nextTick(() => {
-        const input = document.getElementById(`reply-input-${this.replyTo}`);
-        if (input) input.focus();
-        });
-        }
-        });
+                    // Event listener for reply trigger
+                    window.addEventListener('trigger-reply', (e) => {
+                        this.replyTo = (this.replyTo === e.detail.id ? null : e.detail.id);
+                        if (this.replyTo) {
+                            this.$nextTick(() => {
+                                const input = document.getElementById(`reply-input-${this.replyTo}`);
+                                if (input) input.focus();
+                            });
+                        }
+                    });
 
-        // Event listener for global reply submission
-        window.addEventListener('submit-reply-global', async (e) => {
-        const { id, content } = e.detail;
-        await this.postComment(content, id);
-        this.replyTo = null;
-        });
+                    // Event listener for global reply submission
+                    window.addEventListener('submit-reply-global', async (e) => {
+                        const { id, content } = e.detail;
+                        await this.postComment(content, id);
+                        this.replyTo = null;
+                    });
 
-        // Expose render function globally for the expand button
-        window.renderCommentsGlobal = this.renderComments.bind(this);
-        },
+                    // Expose render function globally for the expand button
+                    window.renderCommentsGlobal = this.renderComments.bind(this);
+                },
 
-        renderComments(comments, depth = 0) {
-        if (!comments || comments.length === 0) return '';
+                renderComments(comments, depth = 0) {
+                    if (!comments || comments.length === 0) return '';
 
-        let html = '';
+                    let html = '';
 
-        // Logic for "Show more"
-        // Only limit if depth > 0 (replies), show all top-level comments?
-        // User said "one it reaches like 5 replies I shows expand more".
-        // So apply to all levels.
-        const limit = 5;
-        const visibleCount = (comments.length > limit) ? limit : comments.length;
-        const hiddenCount = comments.length - visibleCount;
+                    // Logic for "Show more"
+                    // Only limit if depth > 0 (replies), show all top-level comments?
+                    // User said "one it reaches like 5 replies I shows expand more".
+                    // So apply to all levels.
+                    const limit = 5;
+                    const visibleCount = (comments.length > limit) ? limit : comments.length;
+                    const hiddenCount = comments.length - visibleCount;
 
-        comments.slice(0, visibleCount).forEach(comment => {
-        const isBanned = comment.author_is_banned;
-        const bannedBadge = isBanned ? `<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Banned</span>` : '';
-        const authorName = comment.author_name || 'User ' + comment.author_id;
+                    comments.slice(0, visibleCount).forEach(comment => {
+                        const isBanned = comment.author_is_banned;
+                        const bannedBadge = isBanned ? `<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Banned</span>` : '';
+                        const authorName = comment.author_name || 'User ' + comment.author_id;
 
-        // Indentation for depth
-        // We use nested divs for structure, but visual indentation is handled by margin-left in the container
+                        // Indentation for depth
+                        // We use nested divs for structure, but visual indentation is handled by margin-left in the container
 
-        html += `
+                        html += `
         <div class="comment-node bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-4"
             id="comment-${comment.id}">
             <div class="flex justify-between items-start">
@@ -427,238 +427,238 @@
             </div>
         </div>
         `;
-        });
+                    });
 
-        if (hiddenCount > 0) {
-        html += `
+                    if (hiddenCount > 0) {
+                        html += `
         <button
             onclick="window.expandComments(this, '${encodeURIComponent(JSON.stringify(comments.slice(visibleCount)))}', ${depth})"
             class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 mt-2 mb-4">
             Show ${hiddenCount} more replies...
         </button>
         `;
-        }
+                    }
 
-        return html;
-        },
+                    return html;
+                },
 
-        // ... existing methods ...
+                // ... existing methods ...
 
-        async fetchPosts() {
-        this.isLoading = true;
-        try {
-        let url = `/forum/posts?sort_by=${this.sortBy}`;
-        if (this.searchQuery) {
-        url += `&q=${encodeURIComponent(this.searchQuery)}`;
-        }
-        const response = await fetch(url);
-        if (response.ok) {
-        this.posts = await response.json();
-        // Sort pinned posts to top (client side override for pinned)
-        this.posts.sort((a, b) => (b.is_pinned === a.is_pinned) ? 0 : b.is_pinned ? 1 : -1);
-        }
-        } catch (error) {
-        console.error('Error fetching posts:', error);
-        } finally {
-        this.isLoading = false;
-        }
-        },
+                async fetchPosts() {
+                    this.isLoading = true;
+                    try {
+                        let url = `/forum/posts?sort_by=${this.sortBy}`;
+                        if (this.searchQuery) {
+                            url += `&q=${encodeURIComponent(this.searchQuery)}`;
+                        }
+                        const response = await fetch(url);
+                        if (response.ok) {
+                            this.posts = await response.json();
+                            // Sort pinned posts to top (client side override for pinned)
+                            this.posts.sort((a, b) => (b.is_pinned === a.is_pinned) ? 0 : b.is_pinned ? 1 : -1);
+                        }
+                    } catch (error) {
+                        console.error('Error fetching posts:', error);
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
 
-        get filteredPosts() {
-        if (this.selectedCategory === 'all') {
-        return this.posts;
-        }
-        return this.posts.filter(post => post.category === this.selectedCategory);
-        },
+                get filteredPosts() {
+                    if (this.selectedCategory === 'all') {
+                        return this.posts;
+                    }
+                    return this.posts.filter(post => post.category === this.selectedCategory);
+                },
 
-        filterCategory(categoryId) {
-        this.selectedCategory = categoryId;
-        this.selectedPost = null;
-        },
+                filterCategory(categoryId) {
+                    this.selectedCategory = categoryId;
+                    this.selectedPost = null;
+                },
 
-        formatCategory(category) {
-        if (!category) return '';
-        return category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-        },
+                formatCategory(category) {
+                    if (!category) return '';
+                    return category.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                },
 
-        formatDate(dateString) {
-        if (!dateString) return '';
-        return new Date(dateString).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-        },
+                formatDate(dateString) {
+                    if (!dateString) return '';
+                    return new Date(dateString).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+                },
 
-        openCreateModal() {
-        this.showCreateModal = true;
-        },
+                openCreateModal() {
+                    this.showCreateModal = true;
+                },
 
-        async createPost() {
-        const userStr = localStorage.getItem('flb_user');
-        if (!userStr) {
-        alert('Please login to create a post.');
-        window.location.href = '/login-page';
-        return;
-        }
-        const user = JSON.parse(userStr);
+                async createPost() {
+                    const userStr = localStorage.getItem('flb_user');
+                    if (!userStr) {
+                        alert('Please login to create a post.');
+                        window.location.href = '/login-page';
+                        return;
+                    }
+                    const user = JSON.parse(userStr);
 
-        try {
-        const payload = {
-        ...this.newPost,
-        author_id: user.id
-        };
+                    try {
+                        const payload = {
+                            ...this.newPost,
+                            author_id: user.id
+                        };
 
-        const response = await fetch('/forum/posts', {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-        });
+                        const response = await fetch('/forum/posts', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(payload)
+                        });
 
-        if (response.ok) {
-        this.showCreateModal = false;
-        this.newPost = { title: '', category: 'general', content: '' };
-        this.fetchPosts();
-        } else {
-        const data = await response.json();
-        alert(data.error || 'Failed to create post.');
-        }
-        } catch (error) {
-        console.error('Error creating post:', error);
-        alert('An error occurred.');
-        }
-        },
+                        if (response.ok) {
+                            this.showCreateModal = false;
+                            this.newPost = { title: '', category: 'general', content: '' };
+                            this.fetchPosts();
+                        } else {
+                            const data = await response.json();
+                            alert(data.error || 'Failed to create post.');
+                        }
+                    } catch (error) {
+                        console.error('Error creating post:', error);
+                        alert('An error occurred.');
+                    }
+                },
 
-        async viewPost(post) {
-        this.selectedPost = post;
-        try {
-        const response = await fetch(`/forum/posts/${post.id}`);
-        if (response.ok) {
-        const detailedPost = await response.json();
-        this.selectedPost = detailedPost;
-        this.postComments = detailedPost.comments || [];
-        }
-        } catch (error) {
-        console.error('Error fetching post details:', error);
-        }
-        },
+                async viewPost(post) {
+                    this.selectedPost = post;
+                    try {
+                        const response = await fetch(`/forum/posts/${post.id}`);
+                        if (response.ok) {
+                            const detailedPost = await response.json();
+                            this.selectedPost = detailedPost;
+                            this.postComments = detailedPost.comments || [];
+                        }
+                    } catch (error) {
+                        console.error('Error fetching post details:', error);
+                    }
+                },
 
-        async submitComment() {
-        if (!this.newComment.trim()) return;
-        await this.postComment(this.newComment);
-        this.newComment = '';
-        },
+                async submitComment() {
+                    if (!this.newComment.trim()) return;
+                    await this.postComment(this.newComment);
+                    this.newComment = '';
+                },
 
-        async submitReply(parentId) {
-        if (!this.replyContent.trim()) return;
-        await this.postComment(this.replyContent, parentId);
-        this.replyContent = '';
-        this.replyTo = null;
-        },
+                async submitReply(parentId) {
+                    if (!this.replyContent.trim()) return;
+                    await this.postComment(this.replyContent, parentId);
+                    this.replyContent = '';
+                    this.replyTo = null;
+                },
 
-        async postComment(content, parentId = null) {
-        const userStr = localStorage.getItem('flb_user');
-        if (!userStr) {
-        alert('Please login to comment.');
-        window.location.href = '/login-page';
-        return;
-        }
-        const user = JSON.parse(userStr);
+                async postComment(content, parentId = null) {
+                    const userStr = localStorage.getItem('flb_user');
+                    if (!userStr) {
+                        alert('Please login to comment.');
+                        window.location.href = '/login-page';
+                        return;
+                    }
+                    const user = JSON.parse(userStr);
 
-        try {
-        const payload = {
-        content: content,
-        author_id: user.id
-        };
-        if (parentId) {
-        payload.parent_id = parentId;
-        }
+                    try {
+                        const payload = {
+                            content: content,
+                            author_id: user.id
+                        };
+                        if (parentId) {
+                            payload.parent_id = parentId;
+                        }
 
-        const response = await fetch(`/forum/posts/${this.selectedPost.id}/comments`, {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
-        });
+                        const response = await fetch(`/forum/posts/${this.selectedPost.id}/comments`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(payload)
+                        });
 
-        if (response.ok) {
-        this.viewPost(this.selectedPost); // Refresh comments
-        } else {
-        const data = await response.json();
-        alert(data.error || 'Failed to post comment.');
-        }
-        } catch (error) {
-        console.error('Error posting comment:', error);
-        }
-        },
+                        if (response.ok) {
+                            this.viewPost(this.selectedPost); // Refresh comments
+                        } else {
+                            const data = await response.json();
+                            alert(data.error || 'Failed to post comment.');
+                        }
+                    } catch (error) {
+                        console.error('Error posting comment:', error);
+                    }
+                },
 
-        async votePost(postId) {
-        if (!this.currentUser) {
-        alert('Please login to vote.');
-        return;
-        }
+                async votePost(postId) {
+                    if (!this.currentUser) {
+                        alert('Please login to vote.');
+                        return;
+                    }
 
-        try {
-        const response = await fetch(`/forum/posts/${postId}/vote`, {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-        vote_type: 'upvote',
-        user_id: this.currentUser.id
-        })
-        });
+                    try {
+                        const response = await fetch(`/forum/posts/${postId}/vote`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                vote_type: 'upvote',
+                                user_id: this.currentUser.id
+                            })
+                        });
 
-        if (response.ok) {
-        const data = await response.json();
-        // Update local state
-        if (this.selectedPost && this.selectedPost.id === postId) {
-        this.selectedPost.upvotes = data.upvotes;
-        }
-        const postIndex = this.posts.findIndex(p => p.id === postId);
-        if (postIndex !== -1) {
-        this.posts[postIndex].upvotes = data.upvotes;
-        }
-        } else {
-        if (response.status === 401) {
-        window.location.href = '/login-page';
-        } else {
-        alert('Failed to vote.');
-        }
-        }
-        } catch (error) {
-        console.error('Error voting:', error);
-        }
-        },
+                        if (response.ok) {
+                            const data = await response.json();
+                            // Update local state
+                            if (this.selectedPost && this.selectedPost.id === postId) {
+                                this.selectedPost.upvotes = data.upvotes;
+                            }
+                            const postIndex = this.posts.findIndex(p => p.id === postId);
+                            if (postIndex !== -1) {
+                                this.posts[postIndex].upvotes = data.upvotes;
+                            }
+                        } else {
+                            if (response.status === 401) {
+                                window.location.href = '/login-page';
+                            } else {
+                                alert('Failed to vote.');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error voting:', error);
+                    }
+                },
 
-        async pinPost(postId) {
-        if (!this.currentUser) return;
+                async pinPost(postId) {
+                    if (!this.currentUser) return;
 
-        try {
-        const response = await fetch(`/forum/posts/${postId}/pin`, {
-        method: 'POST',
-        headers: {
-        'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-        user_id: this.currentUser.id
-        })
-        });
+                    try {
+                        const response = await fetch(`/forum/posts/${postId}/pin`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                user_id: this.currentUser.id
+                            })
+                        });
 
-        if (response.ok) {
-        const data = await response.json();
-        if (this.selectedPost && this.selectedPost.id === postId) {
-        this.selectedPost.is_pinned = data.is_pinned;
+                        if (response.ok) {
+                            const data = await response.json();
+                            if (this.selectedPost && this.selectedPost.id === postId) {
+                                this.selectedPost.is_pinned = data.is_pinned;
+                            }
+                            this.fetchPosts(); // Refresh list to re-sort
+                        } else {
+                            alert('Failed to pin post.');
+                        }
+                    } catch (error) {
+                        console.error('Error pinning post:', error);
+                    }
+                }
+            }
         }
-        this.fetchPosts(); // Refresh list to re-sort
-        } else {
-        alert('Failed to pin post.');
-        }
-        } catch (error) {
-        console.error('Error pinning post:', error);
-        }
-        }
-        }
-        }
-        </script>
-        {% endblock %}
+    </script>
+    {% endblock %}
