@@ -542,9 +542,7 @@ def create_app():
     def profile_settings_page():
         return render_template('profile_settings.html')
 
-    @app.route('/profile/<int:user_id>')
-    def public_profile_page(user_id):
-        return render_template('public_profile.html', profile_id=user_id)
+
 
     @app.route('/workers/<int:id>')
     def worker_detail_page(id):

@@ -63,6 +63,17 @@
                                     class="absolute bottom-0 left-0 w-full h-0.5 bg-emerald-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
                             </a>
 
+                            <!-- AI Assistant (Farmers Only) -->
+                            <template x-if="user.account_type === 'farmer'">
+                                <a href="/tools/produce-assistant"
+                                    class="text-sm font-medium text-gray-300 hover:text-white transition-colors py-2 relative group flex items-center gap-2">
+                                    <i class="fa-solid fa-robot text-emerald-400"></i>
+                                    <span>AI Assistant</span>
+                                    <span
+                                        class="absolute bottom-0 left-0 w-full h-0.5 bg-emerald-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
+                                </a>
+                            </template>
+
                             <!-- Regular User Links (Hidden for Admins) -->
                             <template x-if="!['admin', 'super_admin', 'moderator'].includes(user.account_type)">
                                 <div class="flex space-x-6">

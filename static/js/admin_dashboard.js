@@ -25,7 +25,7 @@ function adminDashboard() {
             }
 
             // Redirect if not admin
-            if (!['admin', 'super_admin'].includes(this.user.account_type)) {
+            if (!['admin', 'super_admin', 'moderator'].includes(this.user.account_type)) {
                 window.location.href = '/dashboard';
                 return;
             }

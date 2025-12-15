@@ -116,6 +116,23 @@
                 <div class="mb-8">
                     <h3 class="text-lg font-medium text-gray-300 mb-4 px-1">Quick Actions</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- AI Produce Assistant (Farmers Only) -->
+                        <template x-if="user.account_type === 'farmer'">
+                            <a href="/tools/produce-assistant"
+                                class="bg-gray-800 hover:bg-gray-700 border border-emerald-500/30 rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all duration-200 group shadow-lg hover:shadow-xl hover:-translate-y-1 relative overflow-hidden">
+                                <div
+                                    class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 opacity-0 group-hover:opacity-100 transition-opacity">
+                                </div>
+                                <div
+                                    class="h-12 w-12 rounded-full bg-gradient-to-br from-emerald-500 to-cyan-600 flex items-center justify-center mb-3 transition-transform group-hover:scale-110 shadow-lg shadow-emerald-500/20">
+                                    <i class="fas fa-robot text-white text-xl"></i>
+                                </div>
+                                <span
+                                    class="text-gray-100 font-bold group-hover:text-emerald-400 transition-colors z-10">AI
+                                    Assistant</span>
+                                <span class="text-xs text-gray-400 mt-1 z-10">Optimize harvest</span>
+                            </a>
+                        </template>
                         <!-- Messages -->
                         <a href="/messages"
                             class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-xl p-6 flex flex-col items-center justify-center text-center transition-all duration-200 group shadow-lg hover:shadow-xl hover:-translate-y-1">
