@@ -30,12 +30,19 @@ function adminDashboard() {
                 return;
             }
 
-            await Promise.all([
-                this.fetchStats(),
+            // Fetch data based on role
+            const promises = [
                 this.fetchWallet(),
                 this.fetchRecentActivity(),
                 this.fetchRecentMessages()
-            ]);
+            ];
+
+            // Only super_admin can access stats
+            if (this.user.account_type === 'super_admin') {
+                promises.push(this.fetchStats());
+            }
+
+            await Promise.all(promises);
 
             this.isLoading = false;
         },

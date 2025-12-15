@@ -4,8 +4,8 @@
 {% block header_title %}Dashboard{% endblock %}
 
 {% block content %}
-<!-- Business Account Balance -->
-<div class="bg-gray-900 mb-8">
+<!-- Business Account Balance (Super Admin Only) -->
+<div x-cloak x-show="user.account_type === 'super_admin'" class="bg-gray-900 mb-8">
     <p class="text-sm text-gray-400 mb-1">Business Account Balance (Fees Collected)</p>
     <h2 class="text-4xl font-bold text-white mb-2" x-text="formatCurrency(stats.total_revenue)">₦0.00</h2>
     <div class="flex items-center gap-4 mb-2">
@@ -23,8 +23,10 @@
     </div>
 </div>
 
-<!-- Stats Grid -->
-<div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+
+<!-- Stats Grid (Super Admin Only) -->
+<div x-cloak x-show="user.account_type === 'super_admin'"
+    class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
     <!-- Total Users -->
     <div class="bg-gray-800 rounded-lg border border-gray-700 p-6 relative overflow-hidden">
         <div class="flex justify-between items-start">
@@ -83,6 +85,7 @@
     </div>
 </div>
 
+
 <!-- Recent Messages Widget -->
 <div class="mb-8 bg-gray-800 border border-gray-700 rounded-lg overflow-hidden" x-show="recentMessages.length > 0">
     <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
@@ -138,7 +141,7 @@
                 <span class="text-white font-medium">Moderation Queue</span>
             </a>
 
-            <a href="/wallet"
+            <a x-cloak x-show="user.account_type === 'super_admin'" href="/wallet"
                 class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors group">
                 <div
                     class="h-12 w-12 rounded-full bg-green-900/20 flex items-center justify-center mb-3 group-hover:bg-green-900/40 transition-colors">
@@ -156,7 +159,7 @@
                 <span class="text-white font-medium">Verify Users</span>
             </a>
 
-            <a href="/admin/settings"
+            <a x-cloak x-show="user.account_type === 'super_admin'" href="/admin/settings"
                 class="bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg p-6 flex flex-col items-center justify-center text-center transition-colors group">
                 <div
                     class="h-12 w-12 rounded-full bg-gray-700/50 flex items-center justify-center mb-3 group-hover:bg-gray-700 transition-colors">

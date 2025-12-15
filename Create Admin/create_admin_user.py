@@ -54,7 +54,7 @@ def create_admin():
         print(f"Schema update warning: {e}")
         session.rollback()
     
-    email = "admin@flb.com"
+    email = "admin1@flb.com"
     password = "AdminPass123!"
     
     # Check if admin exists
@@ -64,14 +64,14 @@ def create_admin():
         print(f"Admin user {email} already exists.")
         # Update password just in case
         existing_admin.set_password(password)
-        existing_admin.account_type = 'super_admin' # Ensure they have full privileges
+        existing_admin.account_type = 'admin' # Ensure they have full privileges
         session.commit()
         print(f"Updated password for {email}")
     else:
         new_admin = User(
-            full_name="System Admin",
+            full_name="Admin",
             email=email,
-            account_type="super_admin",
+            account_type="admin",
             verified=True,
             email_verified=True
         )

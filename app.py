@@ -398,7 +398,7 @@ def create_app():
         return render_template('admin_dashboard.html')
 
     @app.route('/api/admin/stats', methods=['GET'])
-    @require_moderator
+    @require_super_admin
     def get_admin_stats():
         """Get system statistics for admin dashboard"""
         if not db_available or session_local is None:
@@ -948,7 +948,7 @@ def create_app():
         return jsonify(defaults), 200
 
     @app.route('/api/health/thresholds', methods=['POST'])
-    @require_admin
+    @require_super_admin
     def set_health_thresholds():
         DATA_DIR = os.path.join(config.BASE_DIR, 'data')
         os.makedirs(DATA_DIR, exist_ok=True)
@@ -962,7 +962,7 @@ def create_app():
             return jsonify({'error': str(e)}), 500
 
     @app.route('/api/health/history', methods=['GET'])
-    @require_admin
+    @require_super_admin
     def get_health_history():
         DATA_DIR = os.path.join(config.BASE_DIR, 'data')
         history_path = os.path.join(DATA_DIR, 'health_history.json')
@@ -1081,7 +1081,7 @@ def create_app():
             return jsonify({'error': str(e)}), 500
 
     @app.route('/api/health/alert-test', methods=['POST'])
-    @require_admin
+    @require_super_admin
     def health_alert_test():
         data = request.get_json() or {}
         to_email = data.get('email')
@@ -3514,7 +3514,7 @@ def create_app():
     
     @app.route('/admin/users/<int:user_id>/ban', methods=['POST'])
     @limiter.limit("10 per minute")
-    @require_moderator
+    @require_admin
     def ban_user(user_id):
         """Admin: Ban a user"""
         if not db_available:
@@ -3567,7 +3567,7 @@ def create_app():
     
     @app.route('/admin/users/<int:user_id>/unban', methods=['POST'])
     @limiter.limit("10 per minute")
-    @require_moderator
+    @require_admin
     def unban_user(user_id):
         """Admin: Unban a user"""
         if not db_available:
@@ -3613,7 +3613,7 @@ def create_app():
         return jsonify(result), 200
     
     @app.route('/admin/users/banned', methods=['POST'])
-    @require_moderator
+    @require_admin
     def get_banned_users():
         """Admin: Get list of all banned users"""
         if not db_available:
@@ -3732,7 +3732,7 @@ def create_app():
         return jsonify(result), 201
     
     @app.route('/admin/audit-logs', methods=['POST'])
-    @require_moderator
+    @require_admin
     def get_audit_logs():
         """Super Admin: Get all audit logs (with optional filters)"""
         if not db_available:
@@ -3766,7 +3766,7 @@ def create_app():
 
 
     @app.route('/admin/audit-logs/mark-read', methods=['POST'])
-    @require_moderator
+    @require_admin
     def mark_audit_logs_read():
         """Mark one or more audit log entries as read. JSON: { ids: [1,2,3] } or { mark_all: true }"""
         if not db_available:
@@ -3797,7 +3797,7 @@ def create_app():
 
 
     @app.route('/api/admin/fee-transactions', methods=['GET'])
-    @require_admin
+    @require_super_admin
     def api_fee_transactions():
         """Return recent transactions that are marked as fees for debugging/inspection"""
         if not db_available:
@@ -5070,5 +5070,5 @@ def create_app():
 
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=False)
+    app.run()
 
