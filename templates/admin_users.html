@@ -20,7 +20,8 @@
             <div class="fixed inset-0 bg-black bg-opacity-50" @click="closeVerifyModal()"></div>
             <div class="bg-white dark:bg-gray-800 rounded-lg max-w-3xl w-full mx-auto overflow-hidden shadow-lg z-50">
                 <div class="p-4 border-b flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-900">Verify Documents for <span x-text="selectedUser.full_name"></span></h3>
+                    <h3 class="text-lg font-medium text-gray-900">Verify Documents for <span
+                            x-text="selectedUser.full_name"></span></h3>
                     <button @click="closeVerifyModal()" class="text-gray-500">Close</button>
                 </div>
                 <div class="p-4 space-y-4 text-black">
@@ -39,11 +40,14 @@
                             </div>
                             <div class="flex-1">
                                 <div class="text-sm font-medium" x-text="doc.document_type"></div>
-                                <div class="text-xs text-gray-600">Uploaded: <span x-text="formatDate(doc.created_at || doc.created)"></span></div>
+                                <div class="text-xs text-gray-600">Uploaded: <span
+                                        x-text="formatDate(doc.created_at || doc.created)"></span></div>
                                 <div class="mt-2 text-sm text-gray-700" x-text="doc.document_number || ''"></div>
                             </div>
                             <div class="flex flex-col items-end gap-2">
-                                <button @click="selectDoc(doc)" :class="selectedDocId === doc.id ? 'bg-blue-600 text-white' : 'bg-gray-200'" class="px-3 py-1 rounded text-sm">Select</button>
+                                <button @click="selectDoc(doc)"
+                                    :class="selectedDocId === doc.id ? 'bg-blue-600 text-white' : 'bg-gray-200'"
+                                    class="px-3 py-1 rounded text-sm">Select</button>
                             </div>
                         </div>
                     </template>
@@ -54,21 +58,28 @@
                     </div>
 
                     <div class="flex justify-end gap-2">
-                        <button @click="approveSelectedDoc()" class="px-4 py-2 bg-green-600 text-white rounded">Approve</button>
-                        <button @click="rejectSelectedDoc()" class="px-4 py-2 bg-red-600 text-white rounded">Reject</button>
+                        <button @click="approveSelectedDoc()"
+                            class="px-4 py-2 bg-green-600 text-white rounded">Approve</button>
+                        <button @click="rejectSelectedDoc()"
+                            class="px-4 py-2 bg-red-600 text-white rounded">Reject</button>
                     </div>
                 </div>
             </div>
         </div>
         <!-- Verifications anchor & quick filter -->
-        <div id="verifications" class="px-4 py-3 sm:px-6 bg-gray-900 border-b border-gray-700 flex items-center justify-between gap-4">
+        <div id="verifications"
+            class="px-4 py-3 sm:px-6 bg-gray-900 border-b border-gray-700 flex items-center justify-between gap-4">
             <div class="flex items-center gap-3">
                 <h4 class="text-sm font-medium text-gray-200">Verification Controls</h4>
                 <p class="text-xs text-gray-400">Jump here to review pending verification requests.</p>
             </div>
             <div class="flex items-center gap-3">
-                <button @click="filterMode = 'all'" :class="filterMode === 'all' ? 'bg-gray-700 text-white' : 'bg-transparent text-gray-300'" class="px-3 py-1 rounded text-sm border border-gray-700">Show All</button>
-                <button @click="filterMode = 'pending'" :class="filterMode === 'pending' ? 'bg-yellow-600 text-white' : 'bg-transparent text-gray-300'" class="px-3 py-1 rounded text-sm border border-gray-700">Show Pending Verifications</button>
+                <button @click="filterMode = 'all'"
+                    :class="filterMode === 'all' ? 'bg-gray-700 text-white' : 'bg-transparent text-gray-300'"
+                    class="px-3 py-1 rounded text-sm border border-gray-700">Show All</button>
+                <button @click="filterMode = 'pending'"
+                    :class="filterMode === 'pending' ? 'bg-yellow-600 text-white' : 'bg-transparent text-gray-300'"
+                    class="px-3 py-1 rounded text-sm border border-gray-700">Show Pending Verifications</button>
             </div>
         </div>
         <div class="border-t border-gray-700">
@@ -76,10 +87,18 @@
                 <table class="min-w-full divide-y divide-gray-700">
                     <thead class="bg-gray-900">
                         <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">User</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Role</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Joined</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                User</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                Role</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                Status</th>
+                            <th scope="col"
+                                class="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                                Joined</th>
                             <th scope="col" class="relative px-6 py-3">
                                 <span class="sr-only">Actions</span>
                             </th>
@@ -90,7 +109,8 @@
                             <tr @mouseenter="prefetchPreview(user, $event)" @mouseleave="hidePreview()">
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
+                                        <div
+                                            class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-700 flex items-center justify-center">
                                             <i class="fas fa-user text-gray-400"></i>
                                         </div>
                                         <div class="ml-4">
@@ -100,31 +120,31 @@
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                                            :class="{
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="{
                                                 'bg-green-900 text-green-200': user.account_type === 'farmer',
                                                 'bg-blue-900 text-blue-200': user.account_type === 'worker',
                                                 'bg-purple-900 text-purple-200': ['admin', 'super_admin'].includes(user.account_type),
                                                 'bg-yellow-900 text-yellow-200': user.account_type === 'moderator'
-                                            }"
-                                            x-text="user.account_type">
+                                            }" x-text="user.account_type">
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
-                                            :class="user.is_banned ? 'bg-red-900 text-red-200' : 'bg-green-900 text-green-200'"
-                                            x-text="user.is_banned ? 'Banned' : 'Active'">
+                                        :class="user.is_banned ? 'bg-red-900 text-red-200' : 'bg-green-900 text-green-200'"
+                                        x-text="user.is_banned ? 'Banned' : 'Active'">
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400" x-text="formatDate(user.created_at)"></td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400"
+                                    x-text="formatDate(user.created_at)"></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex items-center justify-end gap-3">
                                         <template x-if="isPending(user)">
-                                            <button @click="verifyUser(user)" class="px-2 py-1 bg-green-600 text-white rounded text-sm">Verify</button>
+                                            <button @click="verifyUser(user)"
+                                                class="px-2 py-1 bg-green-600 text-white rounded text-sm">Verify</button>
                                         </template>
-                                        <button @click="toggleBan(user)" 
-                                                class="text-red-400 hover:text-red-300 ml-4 transition-colors"
-                                                x-text="user.is_banned ? 'Unban' : 'Ban'">
+                                        <button @click="toggleBan(user)"
+                                            class="text-red-400 hover:text-red-300 ml-4 transition-colors"
+                                            x-text="user.is_banned ? 'Unban' : 'Ban'">
                                         </button>
                                     </div>
                                 </td>
@@ -133,7 +153,8 @@
                     </tbody>
                 </table>
                 <!-- Hover preview panel (floating) -->
-                <div x-show="previewVisible" x-cloak x-transition class="fixed z-50 w-64 bg-white dark:bg-gray-800 rounded shadow-lg border" :style="previewStyle">
+                <div x-show="previewVisible" x-cloak x-transition
+                    class="fixed z-50 w-64 bg-white dark:bg-gray-800 rounded shadow-lg border" :style="previewStyle">
                     <div class="p-2 text-sm text-gray-800 dark:text-gray-200">
                         <div class="font-medium mb-1" x-text="previewTitle"></div>
                         <div class="h-36 bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden">
@@ -141,7 +162,9 @@
                                 <img :src="previewSelectedDoc.document_path" class="object-contain w-full h-full" />
                             </template>
                             <template x-if="previewSelectedDoc && !isImage(previewSelectedDoc.document_path)">
-                                <iframe :src="previewSelectedDoc.document_path + (previewPage ? '#page=' + previewPage : '')" class="w-full h-36"></iframe>
+                                <iframe
+                                    :src="previewSelectedDoc.document_path + (previewPage ? '#page=' + previewPage : '')"
+                                    class="w-full h-36"></iframe>
                             </template>
                             <template x-if="!previewSelectedDoc">
                                 <div class="text-xs text-gray-500">No preview available</div>
@@ -150,8 +173,10 @@
                         <div class="mt-2 flex items-center justify-between">
                             <div class="text-xs text-gray-500">Page <span x-text="previewPage"></span></div>
                             <div class="flex gap-1">
-                                <button @click="previewPrevPage()" class="px-2 py-1 text-xs bg-gray-200 rounded">Prev</button>
-                                <button @click="previewNextPage()" class="px-2 py-1 text-xs bg-gray-200 rounded">Next</button>
+                                <button @click="previewPrevPage()"
+                                    class="px-2 py-1 text-xs bg-gray-200 rounded">Prev</button>
+                                <button @click="previewNextPage()"
+                                    class="px-2 py-1 text-xs bg-gray-200 rounded">Next</button>
                             </div>
                         </div>
                     </div>
@@ -162,100 +187,100 @@
 </div>
 
 <script>
-function userManagement() {
-    return {
-        users: [],
-        currentUser: JSON.parse(localStorage.getItem('flb_user') || '{}'),
+    function userManagement() {
+        return {
+            users: [],
+            currentUser: JSON.parse(localStorage.getItem('flb_user') || '{}'),
 
-        async init() {
-            if (!['admin', 'super_admin'].includes(this.currentUser.account_type)) {
-                window.location.href = '/dashboard';
-                return;
-            }
-            await this.fetchUsers();
-
-            // If the page was opened with #verifications, show pending filter and scroll into view
-            try {
-                if (window.location.hash === '#verifications') {
-                    this.filterMode = 'pending';
-                    setTimeout(() => {
-                        const el = document.getElementById('verifications');
-                        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    }, 80);
+            async init() {
+                if (!['admin', 'super_admin', 'moderator'].includes(this.currentUser.account_type)) {
+                    window.location.href = '/dashboard';
+                    return;
                 }
-            } catch (e) {
-                // ignore
-            }
-        },
+                await this.fetchUsers();
 
-        async fetchUsers() {
-            try {
-                const response = await fetch('/admin/users', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ admin_id: this.currentUser.id })
-                });
-                
-                if (response.ok) {
-                    this.users = await response.json();
-                } else {
-                    console.error('Failed to fetch users');
+                // If the page was opened with #verifications, show pending filter and scroll into view
+                try {
+                    if (window.location.hash === '#verifications') {
+                        this.filterMode = 'pending';
+                        setTimeout(() => {
+                            const el = document.getElementById('verifications');
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 80);
+                    }
+                } catch (e) {
+                    // ignore
                 }
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        },
+            },
 
-        // Filter helpers for verification workflow
-        filterMode: 'all',
+            async fetchUsers() {
+                try {
+                    const response = await fetch('/admin/users', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ admin_id: this.currentUser.id })
+                    });
 
-        isPending(user) {
-            // Support various possible backend fields used for verification status
-            return (
-                (user.verification_status && user.verification_status === 'pending') ||
-                (typeof user.is_verified !== 'undefined' && user.is_verified === false) ||
-                user.pending_verification === true ||
-                user.needs_verification === true
-            );
-        },
-
-        filteredUsers() {
-            if (this.filterMode === 'pending') {
-                return this.users.filter(u => this.isPending(u));
-            }
-            return this.users;
-        },
-
-        async toggleBan(user) {
-            if (!confirm(`Are you sure you want to ${user.is_banned ? 'unban' : 'ban'} ${user.full_name}?`)) return;
-
-            const endpoint = user.is_banned ? `/admin/users/${user.id}/unban` : `/admin/users/${user.id}/ban`;
-            try {
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                        admin_id: this.currentUser.id,
-                        reason: 'Admin action via dashboard'
-                    })
-                });
-
-                if (response.ok) {
-                    this.fetchUsers();
-                } else {
-                    const data = await response.json();
-                    alert(data.error || 'Action failed');
+                    if (response.ok) {
+                        this.users = await response.json();
+                    } else {
+                        console.error('Failed to fetch users');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
                 }
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        },
+            },
 
-        async verifyUser(user) {
+            // Filter helpers for verification workflow
+            filterMode: 'all',
+
+            isPending(user) {
+                // Support various possible backend fields used for verification status
+                return (
+                    (user.verification_status && user.verification_status === 'pending') ||
+                    (typeof user.is_verified !== 'undefined' && user.is_verified === false) ||
+                    user.pending_verification === true ||
+                    user.needs_verification === true
+                );
+            },
+
+            filteredUsers() {
+                if (this.filterMode === 'pending') {
+                    return this.users.filter(u => this.isPending(u));
+                }
+                return this.users;
+            },
+
+            async toggleBan(user) {
+                if (!confirm(`Are you sure you want to ${user.is_banned ? 'unban' : 'ban'} ${user.full_name}?`)) return;
+
+                const endpoint = user.is_banned ? `/admin/users/${user.id}/unban` : `/admin/users/${user.id}/ban`;
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            admin_id: this.currentUser.id,
+                            reason: 'Admin action via dashboard'
+                        })
+                    });
+
+                    if (response.ok) {
+                        this.fetchUsers();
+                    } else {
+                        const data = await response.json();
+                        alert(data.error || 'Action failed');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            },
+
+            async verifyUser(user) {
                 // Open verification modal to inspect documents before approving
                 try {
                     this.selectedUser = user;
@@ -275,7 +300,7 @@ function userManagement() {
                     console.error('Error opening verify modal', e);
                     alert('Error opening verify modal: ' + e);
                 }
-        },
+            },
 
             // Modal state and helpers
             showVerifyModal: false,
@@ -416,11 +441,11 @@ function userManagement() {
                 }
             },
 
-        formatDate(dateString) {
-            if (!dateString) return '';
-            return new Date(dateString).toLocaleDateString();
+            formatDate(dateString) {
+                if (!dateString) return '';
+                return new Date(dateString).toLocaleDateString();
+            }
         }
     }
-}
 </script>
 {% endblock %}
